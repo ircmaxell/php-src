@@ -575,6 +575,9 @@ typedef int (*zend_write_func_t)(const char *str, uint str_length);
 #define IS_CONSTANT_ARRAY	9
 #define IS_CALLABLE	10
 
+/* Ugly hack to keep track of string hints vs class names */
+#define IS_STRING_HINT 0x026
+
 /* Ugly hack to support constants as static array indices */
 #define IS_CONSTANT_TYPE_MASK		0x00f
 #define IS_CONSTANT_UNQUALIFIED		0x010

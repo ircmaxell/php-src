@@ -246,6 +246,8 @@ ZEND_API int zend_copy_parameters_array(int param_count, zval *argument_array TS
 /* Parameter parsing API -- andrei */
 
 #define ZEND_PARSE_PARAMS_QUIET 1<<1
+
+ZEND_API int zend_parse_arg_object_to_string(zval **arg, char **p, int *pl, int type TSRMLS_DC);
 ZEND_API int zend_parse_parameters(int num_args TSRMLS_DC, const char *type_spec, ...);
 ZEND_API int zend_parse_parameters_ex(int flags, int num_args TSRMLS_DC, const char *type_spec, ...);
 ZEND_API char *zend_zval_type_name(const zval *arg);

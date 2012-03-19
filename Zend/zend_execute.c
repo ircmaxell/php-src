@@ -597,12 +597,11 @@ ZEND_API int zend_verify_arg_error(int error_type, const zend_function *zf, zend
 	return 0;
 }
 
-static inline int zend_verify_arg_type(zend_function *zf, zend_uint arg_num, zval *arg, ulong fetch_type TSRMLS_DC)
+static inline int zend_verify_arg_type(zend_function *zf, zend_uint arg_num, zval **arg, ulong fetch_type TSRMLS_DC)
 {
 	zend_arg_info *cur_arg_info;
 	char *need_msg;
 	zend_class_entry *ce;
-
 	if (!zf->common.arg_info
 		|| arg_num>zf->common.num_args) {
 		return 1;
@@ -613,40 +612,132 @@ static inline int zend_verify_arg_type(zend_function *zf, zend_uint arg_num, zva
 	if (cur_arg_info->class_name) {
 		const char *class_name;
 
-		if (!arg) {
+		if (!*arg) {
 			need_msg = zend_verify_arg_class_kind(cur_arg_info, fetch_type, &class_name, &ce TSRMLS_CC);
 			return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, need_msg, class_name, "none", "" TSRMLS_CC);
 		}
-		if (Z_TYPE_P(arg) == IS_OBJECT) {
+		if (Z_TYPE_PP(arg) == IS_OBJECT) {
 			need_msg = zend_verify_arg_class_kind(cur_arg_info, fetch_type, &class_name, &ce TSRMLS_CC);
-			if (!ce || !instanceof_function(Z_OBJCE_P(arg), ce TSRMLS_CC)) {
-				return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, need_msg, class_name, "instance of ", Z_OBJCE_P(arg)->name TSRMLS_CC);
+			if (!ce || !instanceof_function(Z_OBJCE_PP(arg), ce TSRMLS_CC)) {
+				return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, need_msg, class_name, "instance of ", Z_OBJCE_PP(arg)->name TSRMLS_CC);
 			}
-		} else if (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null) {
+		} else if (Z_TYPE_PP(arg) != IS_NULL || !cur_arg_info->allow_null) {
 			need_msg = zend_verify_arg_class_kind(cur_arg_info, fetch_type, &class_name, &ce TSRMLS_CC);
-			return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, need_msg, class_name, zend_zval_type_name(arg), "" TSRMLS_CC);
+			return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, need_msg, class_name, zend_zval_type_name(*arg), "" TSRMLS_CC);
 		}
 	} else if (cur_arg_info->type_hint) {
 		switch(cur_arg_info->type_hint) {
 			case IS_ARRAY:
-				if (!arg) {
+				if (!*arg) {
 					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type array", "", "none", "" TSRMLS_CC);
 				}
 
-				if (Z_TYPE_P(arg) != IS_ARRAY && (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null)) {
-					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type array", "", zend_zval_type_name(arg), "" TSRMLS_CC);
+				if (Z_TYPE_PP(arg) != IS_ARRAY && (Z_TYPE_PP(arg) != IS_NULL || !cur_arg_info->allow_null)) {
+					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type array", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
 				}
 				break;
-
 			case IS_CALLABLE:
-				if (!arg) {
+				if (!*arg) {
 					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be callable", "", "none", "" TSRMLS_CC);
 				}
-				if (!zend_is_callable(arg, IS_CALLABLE_CHECK_SILENT, NULL TSRMLS_CC) && (Z_TYPE_P(arg) != IS_NULL || !cur_arg_info->allow_null)) {
-					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be callable", "", zend_zval_type_name(arg), "" TSRMLS_CC);
+				if (!zend_is_callable(*arg, IS_CALLABLE_CHECK_SILENT, NULL TSRMLS_CC) && (Z_TYPE_PP(arg) != IS_NULL || !cur_arg_info->allow_null)) {
+					return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be callable", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
 				}
 				break;
-
+                       case IS_DOUBLE:
+                               switch (Z_TYPE_PP(arg)) {
+                                       case IS_DOUBLE:
+                                               break;
+                                       case IS_STRING:
+                                               {
+                                               double *d;
+                                               long *p;
+                                               if (0 == is_numeric_string(Z_STRVAL_PP(arg), Z_STRLEN_PP(arg), p, d, -1)) {
+                                                       return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type float", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                                               }
+                                               }
+                                       case IS_NULL:
+                                       case IS_LONG:
+                                       case IS_BOOL:
+                                               SEPARATE_ZVAL_IF_NOT_REF(arg);
+                                               convert_to_double(*arg);
+                                               break;
+                                       case IS_ARRAY:
+                                       case IS_OBJECT:
+                                       case IS_RESOURCE:
+                                       default:
+                                               return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type float", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                               }
+                               break;
+                       case IS_BOOL:
+                               switch (Z_TYPE_PP(arg)) {
+                                       case IS_BOOL:
+                                               break;
+                                        case IS_STRING:
+                                        case IS_DOUBLE:
+                                        case IS_NULL:
+                                        case IS_LONG:
+                                               SEPARATE_ZVAL_IF_NOT_REF(arg);
+                                                convert_to_boolean(*arg);
+                                                break;
+                                        case IS_ARRAY:
+                                        case IS_OBJECT:
+                                        case IS_RESOURCE:
+                                        default:
+                                                return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type boolean", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                                }
+                               break;
+                       case IS_STRING:
+                               switch (Z_TYPE_PP(arg)) {
+                                        case IS_STRING:
+                                               break;
+                                        case IS_DOUBLE:
+                                        case IS_NULL:
+                                        case IS_LONG:
+                                        case IS_BOOL:
+                                               SEPARATE_ZVAL_IF_NOT_REF(arg);
+                                                convert_to_string(*arg);
+                                                break;
+                                        case IS_OBJECT:
+                                               {
+                                               char **p;
+                                               int *pl;
+                                               SEPARATE_ZVAL_IF_NOT_REF(arg);
+                                               if (zend_parse_arg_object_to_string(arg, p, pl, IS_STRING TSRMLS_CC) == SUCCESS) {
+                                                       break;
+                                               }
+                                               }
+                                       case IS_ARRAY:
+                                        case IS_RESOURCE:
+                                        default:
+                                                return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type string", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                                }
+                               break;
+                       case IS_LONG:
+                                switch (Z_TYPE_PP(arg)) {
+                                       case IS_LONG:
+                                               break;
+                                        case IS_STRING:
+                                                {
+                                                double *d;
+                                                long *p;
+                                                if (0 == is_numeric_string(Z_STRVAL_PP(arg), Z_STRLEN_PP(arg), p, d, -1)) {
+                                                        return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type int", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                                                }
+                                                }
+                                        case IS_DOUBLE:
+                                        case IS_NULL:
+                                        case IS_BOOL:
+                                               SEPARATE_ZVAL_IF_NOT_REF(arg);
+                                                convert_to_long(*arg);
+                                                break;
+                                        case IS_ARRAY:
+                                        case IS_OBJECT:
+                                        case IS_RESOURCE:
+                                        default:
+                                                return zend_verify_arg_error(E_RECOVERABLE_ERROR, zf, arg_num, "be of the type int", "", zend_zval_type_name(*arg), "" TSRMLS_CC);
+                                }
+                               break;
 			default:
 				zend_error(E_ERROR, "Unknown typehint");
 		}

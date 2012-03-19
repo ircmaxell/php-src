@@ -164,6 +164,10 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %token T_USE        "use (T_USE)"
 %token T_INSTEADOF  "insteadof (T_INSTEADOF)"
 %token T_GLOBAL     "global (T_GLOBAL)"
+%token T_TYPE_BOOL  "bool (T_TYPE_BOOL)"
+%token T_TYPE_INT   "int (T_TYPE_INT)"
+%token T_TYPE_FLOAT "float (T_TYPE_FLOAT)"
+%token T_TYPE_STRING "string (T_TYPE_STRING)"
 %right T_STATIC T_ABSTRACT T_FINAL T_PRIVATE T_PROTECTED T_PUBLIC
 %token T_STATIC     "static (T_STATIC)"
 %token T_ABSTRACT   "abstract (T_ABSTRACT)"
@@ -508,7 +512,6 @@ parameter_list:
 	|	/* empty */
 ;
 
-
 non_empty_parameter_list:
 		optional_class_type T_VARIABLE				{ $$.op_type = IS_UNUSED; $$.u.op.num=1; zend_do_receive_arg(ZEND_RECV, &$2, &$$, NULL, &$1, 0 TSRMLS_CC); }
 	|	optional_class_type '&' T_VARIABLE			{ $$.op_type = IS_UNUSED; $$.u.op.num=1; zend_do_receive_arg(ZEND_RECV, &$3, &$$, NULL, &$1, 1 TSRMLS_CC); }
@@ -525,9 +528,12 @@ optional_class_type:
 		/* empty */					{ $$.op_type = IS_UNUSED; }
 	|	T_ARRAY						{ $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_ARRAY; }
 	|	T_CALLABLE					{ $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_CALLABLE; }
+	|	T_TYPE_BOOL					{ $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_BOOL; }
+	|       T_TYPE_INT                                     { $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_LONG; }
+	|       T_TYPE_FLOAT                                     { $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_DOUBLE; }
+	|       T_TYPE_STRING                                     { $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_STRING_HINT; }
 	|	fully_qualified_class_name			{ $$ = $1; }
 ;
-
 
 function_call_parameter_list:
 		non_empty_function_call_parameter_list	{ $$ = $1; }

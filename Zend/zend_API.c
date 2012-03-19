@@ -258,7 +258,7 @@ ZEND_API int zend_get_object_classname(const zval *object, const char **class_na
 }
 /* }}} */
 
-static int parse_arg_object_to_string(zval **arg, char **p, int *pl, int type TSRMLS_DC) /* {{{ */
+ZEND_API int zend_parse_arg_object_to_string(zval **arg, char **p, int *pl, int type TSRMLS_DC) /* {{{ */
 {
 	if (Z_OBJ_HANDLER_PP(arg, cast_object)) {
 		zval *obj;
@@ -444,7 +444,7 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 						break;
 
 					case IS_OBJECT:
-						if (parse_arg_object_to_string(arg, p, pl, IS_STRING TSRMLS_CC) == SUCCESS) {
+						if (zend_parse_arg_object_to_string(arg, p, pl, IS_STRING TSRMLS_CC) == SUCCESS) {
 							if (c == 'p' && CHECK_ZVAL_NULL_PATH(*arg)) {
 								return "a valid path";
 							}

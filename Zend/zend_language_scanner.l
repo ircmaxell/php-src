@@ -1324,6 +1324,22 @@ NEWLINE ("\r"|"\n"|"\r\n")
  return T_CALLABLE;
 }
 
+<ST_IN_SCRIPTING>"bool" {
+	return T_TYPE_BOOL;
+}
+
+<ST_IN_SCRIPTING>"int" {
+	return T_TYPE_INT;
+}
+
+<ST_IN_SCRIPTING>"float" {
+	return T_TYPE_FLOAT;
+}
+
+<ST_IN_SCRIPTING>"string" {
+	return T_TYPE_STRING;
+}
+
 <ST_IN_SCRIPTING>"++" {
 	return T_INC;
 }

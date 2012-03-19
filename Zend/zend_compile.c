@@ -1822,6 +1822,17 @@ void zend_do_end_function_declaration(const znode *function_token TSRMLS_DC) /* 
 }
 /* }}} */
 
+static inline void zend_init_type_casted_arg(zend_uchar op, int type, zend_arg_info *cur_arg_info, const znode *initialization, zend_uchar pass_by_reference, char *default_error) {
+	cur_arg_info->type_hint = type;
+	if (op == ZEND_RECV_INIT) {
+		if (Z_TYPE(initialization->u.constant) == IS_NULL || (Z_TYPE(initialization->u.constant) == IS_CONSTANT && !strcasecmp(Z_STRVAL(initialization->u.constant), "NULL"))) {
+			cur_arg_info->allow_null = 1;
+		} else if (Z_TYPE(initialization->u.constant) != type) {
+			zend_error(E_COMPILE_ERROR, default_error);
+		}
+	}
+}
+
 void zend_do_receive_arg(zend_uchar op, znode *varname, const znode *offset, const znode *initialization, znode *class_type, zend_uchar pass_by_reference TSRMLS_DC) /* {{{ */
 {
 	zend_op *opline;
@@ -1881,7 +1892,7 @@ void zend_do_receive_arg(zend_uchar op, znode *varname, const znode *offset, con
 
 		if (class_type->u.constant.type != IS_NULL) {
 			if (class_type->u.constant.type == IS_ARRAY) {
-				cur_arg_info->type_hint = IS_ARRAY;
+				cur_arg_info->type_hint = class_type->u.constant.type;
 				if (op == ZEND_RECV_INIT) {
 					if (Z_TYPE(initialization->u.constant) == IS_NULL || (Z_TYPE(initialization->u.constant) == IS_CONSTANT && !strcasecmp(Z_STRVAL(initialization->u.constant), "NULL"))) {
 						cur_arg_info->allow_null = 1;
@@ -1889,6 +1900,42 @@ void zend_do_receive_arg(zend_uchar op, znode *varname, const znode *offset, con
 						zend_error(E_COMPILE_ERROR, "Default value for parameters with array type hint can only be an array or NULL");
 					}
 				}
+			} else if (class_type->u.constant.type == IS_LONG) {
+				zend_init_type_casted_arg(
+					op, 
+					IS_LONG, 
+					cur_arg_info, 
+					initialization, 
+					pass_by_reference, 
+					"Default value for parameters with int type hint can only be INT or NULL"
+				);
+                        } else if (class_type->u.constant.type == IS_DOUBLE) {
+				zend_init_type_casted_arg(
+					op, 
+					IS_DOUBLE, 
+					cur_arg_info,
+					initialization, 
+					pass_by_reference,
+					"Default value for parameters with float type hint can only be FLOAT or NULL"
+				);
+                        } else if (class_type->u.constant.type == IS_BOOL) {
+				zend_init_type_casted_arg(
+					op, 
+					IS_BOOL, 
+					cur_arg_info, 
+					initialization, 
+					pass_by_reference, 
+					"Default value for parameters with boolean type hint can only be BOOL or NULL"
+				);
+                        } else if (class_type->u.constant.type == IS_STRING_HINT) {
+				zend_init_type_casted_arg(
+					op, 
+					IS_STRING, 
+					cur_arg_info, 
+					initialization, 
+					pass_by_reference, 
+					"Default value for parameters with string type hint can only be STRING or NULL" 
+				);
 			} else if (class_type->u.constant.type == IS_CALLABLE) {
 				cur_arg_info->type_hint = IS_CALLABLE;
 				if (op == ZEND_RECV_INIT) {
