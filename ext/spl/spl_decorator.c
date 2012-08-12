@@ -89,7 +89,7 @@ SPL_METHOD(SplDecorator, __construct)
 
 	/* Add one to the size for the parent interface */
 	ce = Z_OBJCE_P(object);
-	ce->interfaces = safe_erealloc(ce->interfaces, ce->num_interfaces, sizeof(zend_class_entry), 0);
+	ce->interfaces = safe_erealloc(ce->interfaces, ce->num_interfaces + 1, sizeof(zend_class_entry), 0);
 	ce->interfaces[ce->num_interfaces] = Z_OBJCE_P(parent);
 	ce->num_interfaces++;
 	
