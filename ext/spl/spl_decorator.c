@@ -12,8 +12,7 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author: Antony Dovgal <tony@daylessday.org>                          |
-  |         Etienne Kneuss <colder@php.net>                              |
+  | Author: Anthony Ferrara <ircmaxell@php.net>                          |
   +----------------------------------------------------------------------+
 */
 
