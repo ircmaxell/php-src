@@ -31,6 +31,7 @@
 #include "spl_engine.h"
 #include "spl_array.h"
 #include "spl_directory.h"
+#include "spl_decorator.h"
 #include "spl_iterators.h"
 #include "spl_exceptions.h"
 #include "spl_observer.h"
@@ -227,6 +228,7 @@ PHP_FUNCTION(class_uses)
 	SPL_ADD_CLASS(SplFileInfo, z_list, sub, allow, ce_flags); \
 	SPL_ADD_CLASS(SplFileObject, z_list, sub, allow, ce_flags); \
 	SPL_ADD_CLASS(SplFixedArray, z_list, sub, allow, ce_flags); \
+	SPL_ADD_CLASS(SplDecorator, z_list, sub, allow, ce_flags); \
 	SPL_ADD_CLASS(SplHeap, z_list, sub, allow, ce_flags); \
 	SPL_ADD_CLASS(SplMinHeap, z_list, sub, allow, ce_flags); \
 	SPL_ADD_CLASS(SplMaxHeap, z_list, sub, allow, ce_flags); \
@@ -938,6 +940,7 @@ PHP_MINIT_FUNCTION(spl)
 	PHP_MINIT(spl_dllist)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(spl_heap)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(spl_fixedarray)(INIT_FUNC_ARGS_PASSTHRU);
+	PHP_MINIT(spl_decorator)(INIT_FUNC_ARGS_PASSTHRU);
 	PHP_MINIT(spl_observer)(INIT_FUNC_ARGS_PASSTHRU);
 
 	return SUCCESS;
