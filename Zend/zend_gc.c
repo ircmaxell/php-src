@@ -67,9 +67,6 @@ static void gc_globals_ctor_ex(zend_gc_globals *gc_globals TSRMLS_DC)
 	gc_globals->zval_marked_grey = 0;
 	gc_globals->zobj_marked_grey = 0;
 #endif
-	gc_globals->zval_mark_grey_stack = (zval**) emalloc(sizeof(zval**));
-	gc_globals->zval_mark_grey_stack_allocated = 1;
-	gc_globals->zval_mark_grey_stack_size = 0;
 }
 
 ZEND_API void gc_globals_ctor(TSRMLS_D)
@@ -83,9 +80,6 @@ ZEND_API void gc_globals_ctor(TSRMLS_D)
 
 ZEND_API void gc_globals_dtor(TSRMLS_D)
 {
-	if (GC_G(zval_mark_grey_stack_allocated) > 0) {
-		efree(GC_G(zval_mark_grey_stack));
-	}
 #ifndef ZTS
 	root_buffer_dtor(&gc_globals TSRMLS_DC);
 #endif
@@ -379,6 +373,8 @@ static void zobj_scan_black(struct _store_object *obj, zval *pz TSRMLS_DC)
 static void zval_mark_grey(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
+	zval **stack;
+	size_t stack_size = 0, stack_allocated = 0;
 
 tail_call:
 	if (GC_ZVAL_GET_COLOR(pz) != GC_GREY) {
@@ -410,13 +406,16 @@ tail_call:
 							if (!props && i == n - 1) {
 								goto tail_call;
 							} else {
-				                                if (GC_G(zval_mark_grey_stack_size) + 1 >= GC_G(zval_mark_grey_stack_allocated)) {
-				                                        size_t new_size = GC_G(zval_mark_grey_stack_allocated) + 10;
-				                                        GC_G(zval_mark_grey_stack) = (zval**) safe_erealloc(GC_G(zval_mark_grey_stack), new_size, sizeof(zval**), 0);
-				                                        GC_G(zval_mark_grey_stack_allocated) = new_size;
+								if (stack_allocated == 0) {
+									stack = (zval**) safe_emalloc(10, sizeof(zval**), 0);
+									stack_allocated = 10;
+								} else  if (stack_size + 1 >= stack_allocated) {
+				                                        size_t new_size = stack_allocated + 10;
+				                                        stack = (zval**) safe_erealloc(stack, new_size, sizeof(zval**), 0);
+				                                        stack_allocated = new_size;
 				                                }
-				                                GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) + 1;
-				                                GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1] = pz;
+				                                stack_size++;
+				                                stack[stack_size - 1] = pz;
 							}
 						}
 					}
@@ -440,13 +439,16 @@ tail_call:
 				pz->refcount__gc--;
 			}
 			if (p->pListNext != NULL) {
-				if (GC_G(zval_mark_grey_stack_size) >= GC_G(zval_mark_grey_stack_allocated)) {
-					size_t new_size = GC_G(zval_mark_grey_stack_allocated) + 10;
-					GC_G(zval_mark_grey_stack) = (zval**) safe_erealloc(GC_G(zval_mark_grey_stack), new_size, sizeof(zval**), 0);
-					GC_G(zval_mark_grey_stack_allocated) = new_size;
+				if (stack_allocated == 0) {
+					stack = (zval**) safe_emalloc(10, sizeof(zval**), 0);
+					stack_allocated = 10;
+				} else if (stack_size + 1 > stack_allocated) {
+					size_t new_size = stack_allocated + 10;
+					stack = (zval**) safe_erealloc(stack, new_size, sizeof(zval**), 0);
+					stack_allocated = new_size;
 				}
-				GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) + 1;
-				GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1] = pz;
+				stack_size++;
+				stack[stack_size - 1] = pz;
 			} else {
 				goto tail_call;
 			}
@@ -454,10 +456,16 @@ tail_call:
 		}
 	}
 unroll:
-	if (GC_G(zval_mark_grey_stack_size) > 0) {
-		pz = GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1];
-		GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) - 1;
+	if (stack_size > 0) {
+		pz = stack[stack_size - 1];
+		stack_size--;
+		if (!pz) {
+			return;
+		}
 		goto tail_call;
+	}
+	if (stack_allocated > 0) {
+		efree(stack);
 	}
 }
 
