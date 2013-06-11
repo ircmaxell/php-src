@@ -125,6 +125,10 @@ typedef struct _zend_gc_globals {
 	zend_uint zval_marked_grey;
 	zend_uint zobj_marked_grey;
 #endif
+	
+	zval **zval_mark_grey_stack;
+        size_t zval_mark_grey_stack_allocated;
+        size_t zval_mark_grey_stack_size;
 
 } zend_gc_globals;
 

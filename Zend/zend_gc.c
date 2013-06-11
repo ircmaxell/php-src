@@ -67,6 +67,9 @@ static void gc_globals_ctor_ex(zend_gc_globals *gc_globals TSRMLS_DC)
 	gc_globals->zval_marked_grey = 0;
 	gc_globals->zobj_marked_grey = 0;
 #endif
+	gc_globals->zval_mark_grey_stack = (zval**) emalloc(sizeof(zval**));
+	gc_globals->zval_mark_grey_stack_allocated = 1;
+	gc_globals->zval_mark_grey_stack_size = 0;
 }
 
 ZEND_API void gc_globals_ctor(TSRMLS_D)
@@ -80,6 +83,9 @@ ZEND_API void gc_globals_ctor(TSRMLS_D)
 
 ZEND_API void gc_globals_dtor(TSRMLS_D)
 {
+	if (GC_G(zval_mark_grey_stack_allocated) > 0) {
+		efree(GC_G(zval_mark_grey_stack));
+	}
 #ifndef ZTS
 	root_buffer_dtor(&gc_globals TSRMLS_DC);
 #endif
@@ -404,12 +410,18 @@ tail_call:
 							if (!props && i == n - 1) {
 								goto tail_call;
 							} else {
-								zval_mark_grey(pz TSRMLS_CC);
+				                                if (GC_G(zval_mark_grey_stack_size) + 1 >= GC_G(zval_mark_grey_stack_allocated)) {
+				                                        size_t new_size = GC_G(zval_mark_grey_stack_allocated) + 10;
+				                                        GC_G(zval_mark_grey_stack) = (zval**) safe_erealloc(GC_G(zval_mark_grey_stack), new_size, sizeof(zval**), 0);
+				                                        GC_G(zval_mark_grey_stack_allocated) = new_size;
+				                                }
+				                                GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) + 1;
+				                                GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1] = pz;
 							}
 						}
 					}
 					if (!props) {
-						return;
+						goto unroll;	
 					}
 					p = props->pListHead;
 				}
@@ -421,18 +433,31 @@ tail_call:
 				p = Z_ARRVAL_P(pz)->pListHead;
 			}
 		}
+
 		while (p != NULL) {
 			pz = *(zval**)p->pData;
 			if (Z_TYPE_P(pz) != IS_ARRAY || Z_ARRVAL_P(pz) != &EG(symbol_table)) {
 				pz->refcount__gc--;
 			}
-			if (p->pListNext == NULL) {
-				goto tail_call;
+			if (p->pListNext != NULL) {
+				if (GC_G(zval_mark_grey_stack_size) >= GC_G(zval_mark_grey_stack_allocated)) {
+					size_t new_size = GC_G(zval_mark_grey_stack_allocated) + 10;
+					GC_G(zval_mark_grey_stack) = (zval**) safe_erealloc(GC_G(zval_mark_grey_stack), new_size, sizeof(zval**), 0);
+					GC_G(zval_mark_grey_stack_allocated) = new_size;
+				}
+				GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) + 1;
+				GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1] = pz;
 			} else {
-				zval_mark_grey(pz TSRMLS_CC);
+				goto tail_call;
 			}
 			p = p->pListNext;
 		}
+	}
+unroll:
+	if (GC_G(zval_mark_grey_stack_size) > 0) {
+		pz = GC_G(zval_mark_grey_stack)[GC_G(zval_mark_grey_stack_size) - 1];
+		GC_G(zval_mark_grey_stack_size) = GC_G(zval_mark_grey_stack_size) - 1;
+		goto tail_call;
 	}
 }
 
