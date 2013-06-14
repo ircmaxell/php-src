@@ -267,7 +267,7 @@ ZEND_API void gc_remove_zval_from_buffer(zval *zv TSRMLS_DC)
 }
 
 #define TAIL_START() \
-	zval **stack; \
+	zval **stack = NULL; \
 	size_t stack_size = 0, stack_allocated = 0; \
 tail_call:
 
@@ -275,14 +275,9 @@ tail_call:
 	if (has_next_condition) { \
 		goto tail_call; \
 	} else { \
-		if (stack_allocated == 0) { \
-			stack = (zval**) safe_emalloc(10, sizeof(zval**), 0); \
-			stack_allocated = 10; \
-		} else if (stack_size + 1 >= stack_allocated) { \
-			size_t new_size = stack_allocated + 10; \
-			stack = (zval**) safe_erealloc(stack, new_size, sizeof(zval**), 0); \
-			stack_allocated = new_size; \
-		} \
+		size_t new_size = stack_allocated + 10; \
+		stack = (zval**) safe_erealloc(stack, new_size, sizeof(zval**), 0); \
+		stack_allocated = new_size; \
 	} \
 	stack_size++; \
 	stack[stack_size - 1] = pz; \
@@ -297,10 +292,9 @@ unroll: \
 	if (stack_size > 0) { \
 		pz = stack[stack_size - 1]; \
 		stack_size--; \
-		if (!pz) { \
-			return; \
+		if (pz) { \
+			goto tail_call; \
 		} \
-		goto tail_call; \
 	} \
 	if (stack_allocated > 0) { \
 		efree(stack); \
