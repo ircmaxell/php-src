@@ -534,8 +534,8 @@ static void gc_mark_roots(TSRMLS_D)
 static void zval_scan(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
+	LOOP_START();
 
-tail_call:	
 	if (GC_ZVAL_GET_COLOR(pz) == GC_GREY) {
 		p = NULL;
 		if (pz->refcount__gc > 0) {
@@ -561,15 +561,11 @@ tail_call:
 							for (i = 0; i < n; i++) {
 								if (table[i]) {
 									pz = table[i];
-									if (!props && i == n - 1) {
-										goto tail_call;
-									} else {
-										zval_scan(pz TSRMLS_CC);
-									}
+									LOOP_ADD_NEXT(!props && i == n - 1, pz);
 								}
 							}
 							if (!props) {
-								return;
+								LOOP_CONTINUE();
 							}
 							p = props->pListHead;
 						}
@@ -584,15 +580,12 @@ tail_call:
 			}
 		}
 		while (p != NULL) {
-			if (p->pListNext == NULL) {
-				pz = *(zval**)p->pData;
-				goto tail_call;
-			} else {
-				zval_scan(*(zval**)p->pData TSRMLS_CC);
-			}
+			pz = *(zval**)p->pData;
+			LOOP_ADD_NEXT(p->pListNext == NULL, pz);
 			p = p->pListNext;
 		}
 	}
+	LOOP_END(pz);
 }
 
 static void zobj_scan(zval *pz TSRMLS_DC)
@@ -656,8 +649,8 @@ static void gc_scan_roots(TSRMLS_D)
 static void zval_collect_white(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
-
-tail_call:
+	LOOP_START();
+	
 	if (((zval_gc_info*)(pz))->u.buffered == (gc_root_buffer*)GC_WHITE) {
 		p = NULL;
 		GC_ZVAL_SET_BLACK(pz);
@@ -690,16 +683,12 @@ tail_call:
 							if (Z_TYPE_P(zv) != IS_ARRAY || Z_ARRVAL_P(zv) != &EG(symbol_table)) {
 								zv->refcount__gc++;
 							}
-							if (!props && i == n - 1) {
-								pz = zv;
-								goto tail_call;
-							} else {
-								zval_collect_white(zv TSRMLS_CC);
-							}
+							pz = zv;
+							LOOP_ADD_NEXT(!props && i == n - 1, pz);
 						}
 					}
 					if (!props) {
-						return;
+						LOOP_CONTINUE();
 					}
 					p = props->pListHead;
 				}
@@ -720,14 +709,11 @@ tail_call:
 			if (Z_TYPE_P(pz) != IS_ARRAY || Z_ARRVAL_P(pz) != &EG(symbol_table)) {
 				pz->refcount__gc++;
 			}
-			if (p->pListNext == NULL) {
-				goto tail_call;
-			} else {
-				zval_collect_white(pz TSRMLS_CC);
-			}
+			LOOP_ADD_NEXT(p->pListNext == NULL, pz);
 			p = p->pListNext;
 		}
 	}
+	LOOP_END(pz);
 }
 
 static void zobj_collect_white(zval *pz TSRMLS_DC)
