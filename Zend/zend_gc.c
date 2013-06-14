@@ -266,13 +266,13 @@ ZEND_API void gc_remove_zval_from_buffer(zval *zv TSRMLS_DC)
 	((zval_gc_info*)zv)->u.buffered = NULL;
 }
 
-#define TAIL_START() \
+#define LOOP_START() \
 	zval **stack = NULL; \
 	size_t stack_size = 0, stack_allocated = 0; \
 tail_call:
 
-#define TAIL_NEXT(has_next_condition, pz) { \
-	if (has_next_condition) { \
+#define LOOP_ADD_NEXT(has_another, pz) { \
+	if (has_another) { \
 		goto tail_call; \
 	} else if (stack_size + 1 >= stack_allocated) { \
 		size_t new_size = stack_allocated + 256; \
@@ -280,17 +280,17 @@ tail_call:
 		stack_allocated = new_size; \
 	} \
 	stack_size++; \
-	stack[stack_size - 1] = pz; \
+	stack[stack_size - 1] = (pz); \
 }
 
-#define TAIL_CONTINUE() { \
+#define LOOP_CONTINUE() { \
 	goto unroll; \
 }
 
-#define TAIL_UNROLL() { \
+#define LOOP_END(pz) { \
 unroll: \
 	if (stack_size > 0) { \
-		pz = stack[stack_size - 1]; \
+		(pz) = stack[stack_size - 1]; \
 		stack_size--; \
 		if (pz) { \
 			goto tail_call; \
@@ -304,7 +304,7 @@ unroll: \
 static void zval_scan_black(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
-	TAIL_START()
+	LOOP_START()
 
 	p = NULL;
 	GC_ZVAL_SET_BLACK(pz);
@@ -330,12 +330,12 @@ static void zval_scan_black(zval *pz TSRMLS_DC)
 							pz->refcount__gc++;
 						}
 						if (GC_ZVAL_GET_COLOR(pz) != GC_BLACK) {
-							TAIL_NEXT(!props && 1 == n - 1, pz);
+							LOOP_ADD_NEXT(!props && 1 == n - 1, pz);
 						}
 					}
 				}
 				if (!props) {
-					TAIL_CONTINUE();
+					LOOP_CONTINUE();
 				}
 				p = props->pListHead;
 			}
@@ -351,11 +351,11 @@ static void zval_scan_black(zval *pz TSRMLS_DC)
 			pz->refcount__gc++;
 		}
 		if (GC_ZVAL_GET_COLOR(pz) != GC_BLACK) {
-			TAIL_NEXT(p->pListNext == NULL, pz);
+			LOOP_ADD_NEXT(p->pListNext == NULL, pz);
 		}
 		p = p->pListNext;
 	}
-	TAIL_UNROLL();
+	LOOP_END(pz);
 }
 
 static void zobj_scan_black(struct _store_object *obj, zval *pz TSRMLS_DC)
@@ -402,7 +402,7 @@ static void zobj_scan_black(struct _store_object *obj, zval *pz TSRMLS_DC)
 static void zval_mark_grey(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
-	TAIL_START();
+	LOOP_START();
 
 	if (GC_ZVAL_GET_COLOR(pz) != GC_GREY) {
 		p = NULL;
@@ -430,11 +430,11 @@ static void zval_mark_grey(zval *pz TSRMLS_DC)
 							if (Z_TYPE_P(pz) != IS_ARRAY || Z_ARRVAL_P(pz) != &EG(symbol_table)) {
 								pz->refcount__gc--;
 							}
-							TAIL_NEXT(!props && i == n - 1, pz);
+							LOOP_ADD_NEXT(!props && i == n - 1, pz);
 						}
 					}
 					if (!props) {
-						TAIL_CONTINUE();	
+						LOOP_CONTINUE();	
 					}
 					p = props->pListHead;
 				}
@@ -452,11 +452,11 @@ static void zval_mark_grey(zval *pz TSRMLS_DC)
 			if (Z_TYPE_P(pz) != IS_ARRAY || Z_ARRVAL_P(pz) != &EG(symbol_table)) {
 				pz->refcount__gc--;
 			}
-			TAIL_NEXT(p->pListNext == NULL, pz);
+			LOOP_ADD_NEXT(p->pListNext == NULL, pz);
 			p = p->pListNext;
 		}
 	}
-	TAIL_UNROLL();
+	LOOP_END(pz);
 }
 
 static void zobj_mark_grey(struct _store_object *obj, zval *pz TSRMLS_DC)
