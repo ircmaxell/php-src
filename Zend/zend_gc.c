@@ -274,8 +274,8 @@ tail_call:
 #define TAIL_NEXT(has_next_condition, pz) { \
 	if (has_next_condition) { \
 		goto tail_call; \
-	} else { \
-		size_t new_size = stack_allocated + 10; \
+	} else if (stack_size + 1 >= stack_allocated) { \
+		size_t new_size = stack_allocated + 256; \
 		stack = (zval**) safe_erealloc(stack, new_size, sizeof(zval**), 0); \
 		stack_allocated = new_size; \
 	} \
