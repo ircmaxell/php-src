@@ -29,6 +29,7 @@
 
 ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 {
+	LOCK_GC()
 	switch (Z_TYPE_P(zvalue) & IS_CONSTANT_TYPE_MASK) {
 		case IS_STRING:
 		case IS_CONSTANT:
@@ -67,9 +68,9 @@ ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 		case IS_BOOL:
 		case IS_NULL:
 		default:
-			return;
 			break;
 	}
+	UNLOCK_GC()
 }
 
 

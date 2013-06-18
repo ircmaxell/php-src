@@ -42,6 +42,8 @@ static void gc_globals_ctor_ex(zend_gc_globals *gc_globals TSRMLS_DC)
 {
 	gc_globals->gc_enabled = 0;
 	gc_globals->gc_active = 0;
+	gc_globals->gc_locked = 0;
+	gc_globals->gc_requested = 0;
 
 	gc_globals->buf = NULL;
 
@@ -115,6 +117,24 @@ ZEND_API void gc_reset(TSRMLS_D)
 		GC_G(unused) = NULL;
 		GC_G(first_unused) = NULL;
 		GC_G(last_unused) = NULL;
+	}
+}
+
+ZEND_API int gc_lock(TSRMLS_D)
+{
+	if (!GC_G(gc_locked)) {
+		GC_G(gc_locked) = 1;
+		return 1;
+	}
+	return 0;
+}
+
+ZEND_API void gc_unlock(TSRMLS_D)
+{
+	GC_G(gc_locked) = 0;
+	if (GC_G(gc_requested)) {
+		GC_G(gc_requested) = 0;
+		gc_collect_cycles(TSRMLS_C);
 	}
 }
 
@@ -782,6 +802,11 @@ static void gc_collect_roots(TSRMLS_D)
 ZEND_API int gc_collect_cycles(TSRMLS_D)
 {
 	int count = 0;
+
+	if (GC_G(gc_locked)) {
+		GC_G(gc_requested) = 1;
+		return 0;
+	}
 
 	if (GC_G(roots).next != &GC_G(roots)) {
 		zval_gc_info *p, *q, *orig_free_list, *orig_next_to_free;

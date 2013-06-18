@@ -99,6 +99,8 @@ typedef struct _zval_gc_info {
 typedef struct _zend_gc_globals {
 	zend_bool         gc_enabled;
 	zend_bool         gc_active;
+	zend_bool	  gc_locked;
+	zend_bool	  gc_requested;
 
 	gc_root_buffer   *buf;				/* preallocated arrays of buffers   */
 	gc_root_buffer    roots;			/* list of possible roots of cycles */
@@ -139,6 +141,8 @@ extern ZEND_API zend_gc_globals gc_globals;
 #endif
 
 BEGIN_EXTERN_C()
+ZEND_API int gc_lock(TSRMLS_D);
+ZEND_API void gc_unlock(TSRMLS_D);
 ZEND_API int  gc_collect_cycles(TSRMLS_D);
 ZEND_API void gc_zval_possible_root(zval *zv TSRMLS_DC);
 ZEND_API void gc_zobj_possible_root(zval *zv TSRMLS_DC);
@@ -233,6 +237,16 @@ static zend_always_inline void gc_remove_from_buffer(gc_root_buffer *root TSRMLS
 
 #define FREE_ZVAL_REL_EX(z)								\
 	efree_rel(z)
+
+#define LOCK_GC()                                  \
+	do {                                       \
+		int __gc_locked = gc_lock(TSRMLS_C);
+
+#define UNLOCK_GC() \
+		if (__gc_locked) {   \
+			gc_unlock(TSRMLS_C); \
+		}                    \
+	} while (0); 
 
 #endif /* ZEND_GC_H */
 
