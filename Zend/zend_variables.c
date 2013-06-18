@@ -29,7 +29,6 @@
 
 ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 {
-	LOCK_GC()
 	switch (Z_TYPE_P(zvalue) & IS_CONSTANT_TYPE_MASK) {
 		case IS_STRING:
 		case IS_CONSTANT:
@@ -51,8 +50,10 @@ ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 		case IS_OBJECT:
 			{
 				TSRMLS_FETCH();
-
+				
+				LOCK_GC()
 				Z_OBJ_HT_P(zvalue)->del_ref(zvalue TSRMLS_CC);
+				UNLOCK_GC()
 			}
 			break;
 		case IS_RESOURCE:
@@ -70,7 +71,6 @@ ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 		default:
 			break;
 	}
-	UNLOCK_GC()
 }
 
 
