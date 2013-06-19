@@ -1732,7 +1732,16 @@ void php_request_shutdown(void *dummy)
 
 	php_deactivate_ticks(TSRMLS_C);
 
-	/* Disable the garbage collector from here out */
+	/* Disable the garbage collector from here out.
+	 * 
+	 * This prevents possible bugs that can occur from the GC firing
+	 * during the normal shutdown phase which can cause odd segfaults
+	 * due to trying to collect partially destroyed objects. 
+	 *
+	 * Additionally, it doesn't make sense to collect garbage while
+	 * we're trying to throw everything away. So we can just disable it
+	 * here, and let the normal shutdown sequence take care of it all.
+ 	 */
 	GC_G(gc_enabled) = 0;
 
 	/* 1. Call all possible shutdown functions registered with register_shutdown_function() */
