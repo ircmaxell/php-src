@@ -1720,6 +1720,7 @@ void php_request_shutdown_for_hook(void *dummy)
 void php_request_shutdown(void *dummy)
 {
 	zend_bool report_memleaks;
+	zend_bool gc_enabled;
 	TSRMLS_FETCH();
 
 	report_memleaks = PG(report_memleaks);
@@ -1732,9 +1733,14 @@ void php_request_shutdown(void *dummy)
 
 	php_deactivate_ticks(TSRMLS_C);
 
+	/* 1. Call all possible shutdown functions registered with register_shutdown_function() */
+	if (PG(modules_activated)) zend_try {
+		php_call_shutdown_functions(TSRMLS_C);
+	} zend_end_try();
+
 	/* Disable the garbage collector from here out.
 	 * 
-	 * This prevents possible bugs that can occur from the GC firing
+	 * This prevents p	ossible bugs that can occur from the GC firing
 	 * during the normal shutdown phase which can cause odd segfaults
 	 * due to trying to collect partially destroyed objects. 
 	 *
@@ -1742,12 +1748,8 @@ void php_request_shutdown(void *dummy)
 	 * we're trying to throw everything away. So we can just disable it
 	 * here, and let the normal shutdown sequence take care of it all.
  	 */
-	GC_G(gc_enabled) = 0;
-
-	/* 1. Call all possible shutdown functions registered with register_shutdown_function() */
-	if (PG(modules_activated)) zend_try {
-		php_call_shutdown_functions(TSRMLS_C);
-	} zend_end_try();
+	gc_enabled = GC_G(gc_enabled);
+	zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "0", sizeof("0")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
 
 	/* 2. Call all possible __destruct() functions */
 	zend_try {
@@ -1770,6 +1772,18 @@ void php_request_shutdown(void *dummy)
 			php_output_end_all(TSRMLS_C);
 		}
 	} zend_end_try();
+
+	/* Disable the garbage collector from here out.
+	 * 
+	 * This prevents possible bugs that can occur from the GC firing
+	 * during the normal shutdown phase which can cause odd segfaults
+	 * due to trying to collect partially destroyed objects. 
+	 *
+	 * Additionally, it doesn't make sense to collect garbage while
+	 * we're trying to throw everything away. So we can just disable it
+	 * here, and let the normal shutdown sequence take care of it all.
+ 	 */
+	zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "0", sizeof("0")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
 
 	/* 4. Reset max_execution_time (no longer executing php code after response sent) */
 	zend_try {
@@ -1807,6 +1821,21 @@ void php_request_shutdown(void *dummy)
 		free(PG(last_error_file));
 		PG(last_error_file) = NULL;
 	}
+
+#ifdef ZEND_DEBUG
+	/* We must re-enable under debug mode to prevent leaks from being reported
+	 * 
+	 * which aren't really leaks, just symbol table variables that haven't
+	 * been collected yet.
+	 *
+	 * We don't normally need to do this, but since zend_deactivate will run the GC
+	 * if it's enabled, we need to re-enable it here so that memory leak detection
+	 * with debug mode enabled still works.
+	 */
+	if (gc_enabled) {
+		zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "1", sizeof("1")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
+	}
+#endif
 
 	/* 7. Shutdown scanner/executor/compiler and restore ini entries */
 	zend_deactivate(TSRMLS_C);
