@@ -1738,6 +1738,11 @@ void php_request_shutdown(void *dummy)
 		php_call_shutdown_functions(TSRMLS_C);
 	} zend_end_try();
 
+	/* 2. Call all possible __destruct() functions */
+	zend_try {
+		zend_call_destructors(TSRMLS_C);
+	} zend_end_try();
+
 	gc_enabled = GC_G(gc_enabled);
 	if (gc_enabled) {
 		/* Disable the garbage collector from here out.
@@ -1752,11 +1757,6 @@ void php_request_shutdown(void *dummy)
 	 	 */
 		zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "0", sizeof("0")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
 	}
-
-	/* 2. Call all possible __destruct() functions */
-	zend_try {
-		zend_call_destructors(TSRMLS_C);
-	} zend_end_try();
 
 	/* 3. Flush all output buffers */
 	zend_try {
