@@ -1738,18 +1738,20 @@ void php_request_shutdown(void *dummy)
 		php_call_shutdown_functions(TSRMLS_C);
 	} zend_end_try();
 
-	/* Disable the garbage collector from here out.
-	 * 
-	 * This prevents p	ossible bugs that can occur from the GC firing
-	 * during the normal shutdown phase which can cause odd segfaults
-	 * due to trying to collect partially destroyed objects. 
-	 *
-	 * Additionally, it doesn't make sense to collect garbage while
-	 * we're trying to throw everything away. So we can just disable it
-	 * here, and let the normal shutdown sequence take care of it all.
- 	 */
 	gc_enabled = GC_G(gc_enabled);
-	zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "0", sizeof("0")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
+	if (gc_enabled) {
+		/* Disable the garbage collector from here out.
+		 * 
+		 * This prevents p	ossible bugs that can occur from the GC firing
+		 * during the normal shutdown phase which can cause odd segfaults
+		 * due to trying to collect partially destroyed objects. 
+		 *
+		 * Additionally, it doesn't make sense to collect garbage while
+		 * we're trying to throw everything away. So we can just disable it
+		 * here, and let the normal shutdown sequence take care of it all.
+	 	 */
+		zend_alter_ini_entry("zend.enable_gc", sizeof("zend.enable_gc"), "0", sizeof("0")-1, ZEND_INI_USER, ZEND_INI_STAGE_RUNTIME); 
+	}
 
 	/* 2. Call all possible __destruct() functions */
 	zend_try {
