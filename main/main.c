@@ -83,7 +83,7 @@
 #include "zend_extensions.h"
 #include "zend_ini.h"
 #include "zend_dtrace.h"
-
+#include "zend_gc.h"
 #include "php_content_types.h"
 #include "php_ticks.h"
 #include "php_streams.h"
@@ -1731,6 +1731,9 @@ void php_request_shutdown(void *dummy)
 	EG(active_op_array) = NULL;
 
 	php_deactivate_ticks(TSRMLS_C);
+
+	/* Disable the garbage collector from here out */
+	GC_G(gc_enabled) = 0;
 
 	/* 1. Call all possible shutdown functions registered with register_shutdown_function() */
 	if (PG(modules_activated)) zend_try {
