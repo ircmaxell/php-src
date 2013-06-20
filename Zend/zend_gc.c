@@ -195,7 +195,7 @@ ZEND_API void gc_zobj_possible_root(zval *zv TSRMLS_DC)
 	struct _store_object *obj;
 
 	if (UNEXPECTED(Z_OBJ_HT_P(zv)->get_gc == NULL ||
-	    EG(objects_store).object_buckets == NULL)) {
+	    !GC_OBJECT_PZVAL_VALID(zv))) {
 		return;
 	}
 
@@ -274,15 +274,14 @@ tail_call:
 	p = NULL;
 	GC_ZVAL_SET_BLACK(pz);
 
-	if (Z_TYPE_P(pz) == IS_OBJECT && EG(objects_store).object_buckets) {
+	if (Z_TYPE_P(pz) == IS_OBJECT && GC_OBJECT_PZVAL_VALID(pz)) {
 		zend_object_get_gc_t get_gc;
 		struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
 		obj->refcount++;
 		if (GC_GET_COLOR(obj->buffered) != GC_BLACK) {
 			GC_SET_BLACK(obj->buffered);
-			if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-			             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+			if ((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL) {
 				int i, n;
 				zval **table;
 				HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -336,7 +335,7 @@ static void zobj_scan_black(struct _store_object *obj, zval *pz TSRMLS_DC)
 	zend_object_get_gc_t get_gc;
 
 	GC_SET_BLACK(obj->buffered);
-	if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
+	if (EXPECTED(GC_OBJECT_PZVAL_VALID(pz) &&
 	             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 		int i, n;
 		zval **table;
@@ -380,7 +379,7 @@ tail_call:
 		GC_BENCH_INC(zval_marked_grey);
 		GC_ZVAL_SET_COLOR(pz, GC_GREY);
 
-		if (Z_TYPE_P(pz) == IS_OBJECT && EG(objects_store).object_buckets) {
+		if (Z_TYPE_P(pz) == IS_OBJECT && GC_OBJECT_PZVAL_VALID(pz)) {
 			zend_object_get_gc_t get_gc;
 			struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
@@ -388,8 +387,7 @@ tail_call:
 			if (GC_GET_COLOR(obj->buffered) != GC_GREY) {
 				GC_BENCH_INC(zobj_marked_grey);
 				GC_SET_COLOR(obj->buffered, GC_GREY);
-				if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-				             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+				if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 					int i, n;
 					zval **table;
 					HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -441,11 +439,10 @@ static void zobj_mark_grey(struct _store_object *obj, zval *pz TSRMLS_DC)
 	Bucket *p;
 	zend_object_get_gc_t get_gc;
 
-	if (GC_GET_COLOR(obj->buffered) != GC_GREY) {
+	if (GC_GET_COLOR(obj->buffered) != GC_GREY && GC_OBJECT_PZVAL_VALID(pz)) {
 		GC_BENCH_INC(zobj_marked_grey);
 		GC_SET_COLOR(obj->buffered, GC_GREY);
-		if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-		             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+		if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 			int i, n;
 			zval **table;
 			HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -481,7 +478,7 @@ static void gc_mark_roots(TSRMLS_D)
 
 	while (current != &GC_G(roots)) {
 		if (current->handle) {
-			if (EG(objects_store).object_buckets) {
+			if (GC_OBJECT_HANDLE_VALID(current->handle)) {
 				struct _store_object *obj = &EG(objects_store).object_buckets[current->handle].bucket.obj;
 
 				if (GC_GET_COLOR(obj->buffered) == GC_PURPLE) {
@@ -519,7 +516,7 @@ tail_call:
 			zval_scan_black(pz TSRMLS_CC);
 		} else {
 			GC_ZVAL_SET_COLOR(pz, GC_WHITE);
-			if (Z_TYPE_P(pz) == IS_OBJECT && EG(objects_store).object_buckets) {
+			if (Z_TYPE_P(pz) == IS_OBJECT && GC_OBJECT_PZVAL_VALID(pz)) {
 				zend_object_get_gc_t get_gc;
 				struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
@@ -528,8 +525,7 @@ tail_call:
 						zobj_scan_black(obj, pz TSRMLS_CC);
 					} else {
 						GC_SET_COLOR(obj->buffered, GC_WHITE);
-						if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-						             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+						if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 							int i, n;
 							zval **table;
 							HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -577,7 +573,7 @@ static void zobj_scan(zval *pz TSRMLS_DC)
 	Bucket *p;
 	zend_object_get_gc_t get_gc;
 
-	if (EG(objects_store).object_buckets) {
+	if (GC_OBJECT_PZVAL_VALID(pz)) {
 		struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
 		if (GC_GET_COLOR(obj->buffered) == GC_GREY) {
@@ -585,8 +581,7 @@ static void zobj_scan(zval *pz TSRMLS_DC)
 				zobj_scan_black(obj, pz TSRMLS_CC);
 			} else {
 				GC_SET_COLOR(obj->buffered, GC_WHITE);
-				if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-				             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+				if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 					int i, n;
 					zval **table;
 					HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -639,7 +634,7 @@ tail_call:
 		p = NULL;
 		GC_ZVAL_SET_BLACK(pz);
 
-		if (Z_TYPE_P(pz) == IS_OBJECT && EG(objects_store).object_buckets) {
+		if (Z_TYPE_P(pz) == IS_OBJECT && GC_OBJECT_PZVAL_VALID(pz)) {
 			zend_object_get_gc_t get_gc;
 			struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
@@ -647,8 +642,7 @@ tail_call:
 				/* PURPLE instead of BLACK to prevent buffering in nested gc calls */
 				GC_SET_PURPLE(obj->buffered);
 
-				if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-				             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+				if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 					int i, n;
 					zval **table, *zv;
 					HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -711,7 +705,7 @@ static void zobj_collect_white(zval *pz TSRMLS_DC)
 {
 	Bucket *p;
 
-	if (EG(objects_store).object_buckets) {
+	if (GC_OBJECT_PZVAL_VALID(pz)) {
 		zend_object_get_gc_t get_gc;
 		struct _store_object *obj = &EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].bucket.obj;
 
@@ -719,8 +713,7 @@ static void zobj_collect_white(zval *pz TSRMLS_DC)
 			/* PURPLE instead of BLACK to prevent buffering in nested gc calls */
 			GC_SET_PURPLE(obj->buffered);
 
-			if (EXPECTED(EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(pz)].valid &&
-			             (get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
+			if (EXPECTED((get_gc = Z_OBJ_HANDLER_P(pz, get_gc)) != NULL)) {
 				int i, n;
 				zval **table;
 				HashTable *props = get_gc(pz, &table, &n TSRMLS_CC);
@@ -757,7 +750,7 @@ static void gc_collect_roots(TSRMLS_D)
 
 	while (current != &GC_G(roots)) {
 		if (current->handle) {
-			if (EG(objects_store).object_buckets) {
+			if (GC_OBJECT_HANDLE_VALID(current->handle)) {
 				struct _store_object *obj = &EG(objects_store).object_buckets[current->handle].bucket.obj;
 				zval z;
 
@@ -805,8 +798,7 @@ ZEND_API int gc_collect_cycles(TSRMLS_D)
 		/* First call destructors */
 		while (p != FREE_LIST_END) {
 			if (Z_TYPE(p->z) == IS_OBJECT) {
-				if (EG(objects_store).object_buckets &&
-					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].valid &&
+				if (GC_OBJECT_ZVAL_VALID(p->z) &&
 					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].bucket.obj.refcount <= 0 &&
 					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].bucket.obj.dtor &&
 					!EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].destructor_called) {
@@ -826,8 +818,7 @@ ZEND_API int gc_collect_cycles(TSRMLS_D)
 		while (p != FREE_LIST_END) {
 			GC_G(next_to_free) = p->u.next;
 			if (Z_TYPE(p->z) == IS_OBJECT) {
-				if (EG(objects_store).object_buckets &&
-					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].valid &&
+				if (GC_OBJECT_ZVAL_VALID(p->z) &&
 					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].bucket.obj.refcount <= 0) {
 					EG(objects_store).object_buckets[Z_OBJ_HANDLE(p->z)].bucket.obj.refcount = 1;
 					Z_TYPE(p->z) = IS_NULL;

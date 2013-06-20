@@ -149,6 +149,19 @@ ZEND_API void gc_init(TSRMLS_D);
 ZEND_API void gc_reset(TSRMLS_D);
 END_EXTERN_C()
 
+#define GC_OBJECT_BUCKET_VALID()	\
+	(EG(objects_store).object_buckets != NULL)
+
+#define GC_OBJECT_HANDLE_VALID(handle)	\
+	(GC_OBJECT_BUCKET_VALID() && EG(objects_store).object_buckets[(handle)].valid)
+
+#define GC_OBJECT_ZVAL_VALID(zv) 	\
+	GC_OBJECT_HANDLE_VALID(Z_OBJ_HANDLE(zv))
+
+#define GC_OBJECT_PZVAL_VALID(pzv) 	\
+	GC_OBJECT_ZVAL_VALID(*pzv)
+
+
 #define GC_ZVAL_CHECK_POSSIBLE_ROOT(z) \
 	gc_zval_check_possible_root((z) TSRMLS_CC)
 
@@ -160,12 +173,11 @@ END_EXTERN_C()
 		gc_remove_zval_from_buffer(z TSRMLS_CC);		\
 	}
 
-#define GC_ZOBJ_CHECK_POSSIBLE_ROOT(zobject)									\
-	do {																		\
-		if (EXPECTED(EG(objects_store).object_buckets != NULL) &&				\
-		    EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(zobject)].valid) {	\
-			gc_zobj_possible_root(zobject TSRMLS_CC);							\
-		}																		\
+#define GC_ZOBJ_CHECK_POSSIBLE_ROOT(zobject)				\
+	do {								\
+		if (EXPECTED(GC_OBJECT_PZVAL_VALID(zobject))) {		\
+			gc_zobj_possible_root(zobject TSRMLS_CC);	\
+		}							\
 	} while (0)
 
 #define GC_REMOVE_ZOBJ_FROM_BUFFER(obj)									\
