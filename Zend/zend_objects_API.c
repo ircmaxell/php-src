@@ -215,6 +215,8 @@ ZEND_API void zend_objects_store_del_ref_by_handle_ex(zend_object_handle handle,
 			obj = &EG(objects_store).object_buckets[handle].bucket.obj;
 
 			if (obj->refcount == 1) {
+				/* Prevent Cycles */
+				EG(objects_store).object_buckets[handle].valid = 0;
 				GC_REMOVE_ZOBJ_FROM_BUFFER(obj);
 				if (obj->free_storage) {
 					zend_try {
