@@ -153,7 +153,7 @@ END_EXTERN_C()
 	(EG(objects_store).object_buckets != NULL)
 
 #define GC_OBJECT_HANDLE_VALID(handle)	\
-	(GC_OBJECT_BUCKET_VALID() && EG(objects_store).object_buckets[(handle)] && EG(objects_store).object_buckets[(handle)].valid)
+	(GC_OBJECT_BUCKET_VALID() && (handle) > 0 && (handle) < EG(objects_store).size && EG(objects_store).object_buckets[(handle)].valid)
 
 #define GC_OBJECT_ZVAL_VALID(zv) 	\
 	GC_OBJECT_HANDLE_VALID(Z_OBJ_HANDLE(zv))
