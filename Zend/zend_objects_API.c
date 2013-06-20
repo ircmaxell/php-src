@@ -160,8 +160,7 @@ ZEND_API void zend_objects_store_add_ref_by_handle(zend_object_handle handle TSR
 
 #define ZEND_OBJECTS_STORE_ADD_TO_FREE_LIST()																	\
 			EG(objects_store).object_buckets[handle].bucket.free_list.next = EG(objects_store).free_list_head;	\
-			EG(objects_store).free_list_head = handle;															\
-			EG(objects_store).object_buckets[handle].valid = 0;
+			EG(objects_store).free_list_head = handle;
 
 ZEND_API void zend_objects_store_del_ref(zval *zobject TSRMLS_DC)
 {
