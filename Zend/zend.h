@@ -481,6 +481,7 @@ struct _zend_class_entry {
 	int refcount;
 	zend_uint ce_flags;
 
+	HashTable *protocol_cache;
 	HashTable function_table;
 	HashTable properties_info;
 	zval **default_properties_table;

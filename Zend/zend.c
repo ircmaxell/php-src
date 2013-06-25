@@ -593,6 +593,11 @@ static void executor_globals_dtor(zend_executor_globals *executor_globals TSRMLS
 		zend_hash_destroy(executor_globals->zend_constants);
 		free(executor_globals->zend_constants);
 	}
+	if (executor_globals->protocol_cache) {
+		zend_hash_destroy(executor_globals->protocol_cache);
+		free(executor_globals->protocol_cache);
+	}
+
 }
 /* }}} */
 

@@ -1804,11 +1804,48 @@ ZEND_API int is_smaller_or_equal_function(zval *result, zval *op1, zval *op2 TSR
 
 static int protocol_check_function_implementation(void *function_entry TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key);
 
+static void protocol_cache_dtor(void *data) /* {{{ */
+{
+	zend_hash_destroy((HashTable *) data);
+}
+/* }}} */
+
 ZEND_API zend_bool protocol_check_function(zend_class_entry *instance_ce, zend_class_entry *ce TSRMLS_DC) /* {{{ */
 {
 	zend_bool result = 1;
+	HashTable *cache_bucket = NULL;
+	zend_bool *cache_result = NULL;
+
+	if (!instance_ce->protocol_cache) {
+		HashTable **cache_bucket_ext = NULL;
+		
+		if (!EG(protocol_cache)) {
+			EG(protocol_cache) = (HashTable*) malloc(sizeof(HashTable));
+			zend_hash_init(EG(protocol_cache), 16, NULL, protocol_cache_dtor, 1);
+		}
+
+		if (zend_hash_find(EG(protocol_cache), instance_ce->name, instance_ce->name_length, (void **) &cache_bucket_ext) == FAILURE) {
+			cache_bucket = (HashTable*) malloc(sizeof(HashTable));
+			zend_hash_init(cache_bucket, 16, NULL, NULL, 1);
+			zend_hash_add(EG(protocol_cache), instance_ce->name, instance_ce->name_length, (void *) &cache_bucket, sizeof(void *), NULL);
+		} else {
+			cache_bucket = *cache_bucket_ext;
+		}
+		instance_ce->protocol_cache = cache_bucket;
+	} else {
+		cache_bucket = instance_ce->protocol_cache;
+	}
+
+	if (zend_hash_find(cache_bucket, ce->name, ce->name_length, (void **) &cache_result) != FAILURE) {
+		return *cache_result;
+	}
+
+	if (0 == instanceof_function(instance_ce, ce)) {
+		/* Short-circuit if types match */
+		zend_hash_apply_with_arguments(&(ce->function_table), protocol_check_function_implementation, 2, instance_ce, &result);
+	}
 	
-	zend_hash_apply_with_arguments(&(ce->function_table), protocol_check_function_implementation, 2, instance_ce, &result);
+	zend_hash_add(cache_bucket, ce->name, ce->name_length, (void *) &result, sizeof(zend_bool), NULL);
 	
 	return result;
 }

@@ -187,6 +187,8 @@ struct _zend_executor_globals {
 
 	zend_op_array *active_op_array;
 
+	HashTable *protocol_cache;      /* protocol cache hash table */
+
 	HashTable *function_table;	/* function symbol table */
 	HashTable *class_table;		/* class table */
 	HashTable *zend_constants;	/* constants table */
