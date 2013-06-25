@@ -538,6 +538,7 @@ optional_class_type:
 		/* empty */					{ $$.op_type = IS_UNUSED; }
 	|	T_ARRAY						{ $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_ARRAY; }
 	|	T_CALLABLE					{ $$.op_type = IS_CONST; Z_TYPE($$.u.constant)=IS_CALLABLE; }
+	|	'<' fully_qualified_class_name '>'		{ $$ = $2; Z_TYPE($$.u.constant) = IS_PROTOCOL; }
 	|	fully_qualified_class_name			{ $$ = $1; }
 ;
 

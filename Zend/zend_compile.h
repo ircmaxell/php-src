@@ -694,6 +694,7 @@ ZEND_API zend_bool zend_is_compiling(TSRMLS_D);
 ZEND_API char *zend_make_compiled_string_description(const char *name TSRMLS_DC);
 ZEND_API void zend_initialize_class_data(zend_class_entry *ce, zend_bool nullify_handlers TSRMLS_DC);
 int zend_get_class_fetch_type(const char *class_name, uint class_name_len);
+ZEND_API zend_bool zend_do_perform_implementation_check(const zend_function *fe, const zend_function *proto TSRMLS_DC);
 
 typedef zend_bool (*zend_auto_global_callback)(const char *name, uint name_len TSRMLS_DC);
 typedef struct _zend_auto_global {

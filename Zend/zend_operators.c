@@ -30,6 +30,8 @@
 #include "zend_strtod.h"
 #include "zend_exceptions.h"
 #include "zend_closures.h"
+#include "zend_compile.h"
+#include "zend_hash.h"
 
 #if ZEND_USE_TOLOWER_L
 #include <locale.h>
@@ -1797,6 +1799,56 @@ ZEND_API int is_smaller_or_equal_function(zval *result, zval *op1, zval *op2 TSR
 	}
 	ZVAL_BOOL(result, (Z_LVAL_P(result) <= 0));
 	return SUCCESS;
+}
+/* }}} */
+
+static int protocol_check_function_implementation(void *function_entry TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key);
+
+ZEND_API zend_bool protocol_check_function(zend_class_entry *instance_ce, zend_class_entry *ce TSRMLS_DC) /* {{{ */
+{
+	zend_bool result = 1;
+	
+	zend_hash_apply_with_arguments(&(ce->function_table), protocol_check_function_implementation, 2, instance_ce, &result);
+	
+	return result;
+}
+/* }}} */
+
+static int protocol_check_function_implementation(void *function_entry TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */
+{
+	zend_function *child;
+	zend_bool *result;
+	zend_class_entry *ce;
+	zend_uint child_flags;
+	zend_uint protocol_flags = ((zend_function*) function_entry)->common.fn_flags;
+
+	TSRMLS_FETCH();
+	ce = va_arg(args, zend_class_entry*);
+	result = va_arg(args, zend_bool*);
+
+	if (*result == 0) {
+		return ZEND_HASH_APPLY_STOP;
+	}
+
+	if (zend_hash_quick_find(&(ce->function_table), hash_key->arKey, hash_key->nKeyLength, hash_key->h, (void **) &child) == FAILURE) {
+		*result = 0;
+		return ZEND_HASH_APPLY_STOP;
+	}
+	child_flags = child->common.fn_flags;
+	if ((child_flags & ZEND_ACC_STATIC) != (protocol_flags & ZEND_ACC_STATIC)) {
+		*result = 0;
+		return ZEND_HASH_APPLY_STOP;
+	}
+	if ((child_flags & ZEND_ACC_ABSTRACT)) {
+		/* This shouldn't be possible, as it requires an instance, bail! */
+		*result = 0;
+		return ZEND_HASH_APPLY_STOP;
+	}
+	if (zend_do_perform_implementation_check(child, function_entry TSRMLS_DC) == 0) {
+		*result = 0;
+		return ZEND_HASH_APPLY_STOP;
+	}
+	return ZEND_HASH_APPLY_KEEP;
 }
 /* }}} */
 

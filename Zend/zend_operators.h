@@ -68,6 +68,7 @@ ZEND_API int is_smaller_or_equal_function(zval *result, zval *op1, zval *op2 TSR
 
 ZEND_API zend_bool instanceof_function_ex(const zend_class_entry *instance_ce, const zend_class_entry *ce, zend_bool interfaces_only TSRMLS_DC);
 ZEND_API zend_bool instanceof_function(const zend_class_entry *instance_ce, const zend_class_entry *ce TSRMLS_DC);
+ZEND_API zend_bool protocol_check_function(zend_class_entry *instance_ce, zend_class_entry *ce TSRMLS_DC);
 END_EXTERN_C()
 
 #if ZEND_DVAL_TO_LVAL_CAST_OK

@@ -1911,7 +1911,12 @@ void zend_do_receive_arg(zend_uchar op, znode *varname, const znode *offset, con
 					}
 				}
 			} else {
-				cur_arg_info->type_hint = IS_OBJECT;
+				if (class_type->u.constant.type == IS_PROTOCOL) {
+					cur_arg_info->type_hint = IS_PROTOCOL;
+					class_type->u.constant.type = IS_STRING;
+				} else {
+					cur_arg_info->type_hint = IS_OBJECT;
+				}
 				if (ZEND_FETCH_CLASS_DEFAULT == zend_get_class_fetch_type(Z_STRVAL(class_type->u.constant), Z_STRLEN(class_type->u.constant))) {
 					zend_resolve_class_name(class_type, opline->extended_value, 1 TSRMLS_CC);
 				}
@@ -3113,7 +3118,7 @@ static void do_inherit_method(zend_function *function) /* {{{ */
 }
 /* }}} */
 
-static zend_bool zend_do_perform_implementation_check(const zend_function *fe, const zend_function *proto TSRMLS_DC) /* {{{ */
+ZEND_API zend_bool zend_do_perform_implementation_check(const zend_function *fe, const zend_function *proto TSRMLS_DC) /* {{{ */
 {
 	zend_uint i;
 
