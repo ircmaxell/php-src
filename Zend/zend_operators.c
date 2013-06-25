@@ -1822,6 +1822,11 @@ static int protocol_check_function_implementation(void *function_entry TSRMLS_DC
 	zend_uint child_flags;
 	zend_uint protocol_flags = ((zend_function*) function_entry)->common.fn_flags;
 
+	if (protocol_flags & (ZEND_ACC_PRIVATE | ZEND_ACC_PROTECTED)) {
+		/* Skip the non-public API */
+		return ZEND_HASH_APPLY_KEEP;
+	}
+
 	TSRMLS_FETCH();
 	ce = va_arg(args, zend_class_entry*);
 	result = va_arg(args, zend_bool*);
@@ -1835,6 +1840,7 @@ static int protocol_check_function_implementation(void *function_entry TSRMLS_DC
 		return ZEND_HASH_APPLY_STOP;
 	}
 	child_flags = child->common.fn_flags;
+
 	if ((child_flags & ZEND_ACC_STATIC) != (protocol_flags & ZEND_ACC_STATIC)) {
 		*result = 0;
 		return ZEND_HASH_APPLY_STOP;
