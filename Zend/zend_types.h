@@ -28,6 +28,8 @@ typedef unsigned int zend_uint;
 typedef unsigned long zend_ulong;
 typedef unsigned short zend_ushort;
 
+typedef size_t zend_string_size;
+
 #define HAVE_ZEND_LONG64
 #ifdef ZEND_WIN32
 typedef __int64 zend_long64;

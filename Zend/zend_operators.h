@@ -128,7 +128,7 @@ static zend_always_inline long zend_dval_to_lval(double d)
  * could not be represented as such due to overflow. It writes 1 to oflow_info
  * if the integer is larger than LONG_MAX and -1 if it's smaller than LONG_MIN.
  */
-static inline zend_uchar is_numeric_string_ex(const char *str, int length, long *lval, double *dval, int allow_errors, int *oflow_info)
+static inline zend_uchar is_numeric_string_ex(const char *str, zend_string_size length, long *lval, double *dval, int allow_errors, int *oflow_info)
 {
 	const char *ptr;
 	int base = 10, digits = 0, dp_or_e = 0;
@@ -265,12 +265,12 @@ process_double:
 	}
 }
 
-static inline zend_uchar is_numeric_string(const char *str, int length, long *lval, double *dval, int allow_errors) {
+static inline zend_uchar is_numeric_string(const char *str, zend_string_size length, long *lval, double *dval, int allow_errors) {
     return is_numeric_string_ex(str, length, lval, dval, allow_errors, NULL);
 }
 
 static inline char *
-zend_memnstr(char *haystack, char *needle, int needle_len, char *end)
+zend_memnstr(char *haystack, char *needle, zend_string_size needle_len, char *end)
 {
 	char *p = haystack;
 	char ne = needle[needle_len-1];
@@ -353,27 +353,27 @@ ZEND_API int string_case_compare_function(zval *result, zval *op1, zval *op2 TSR
 ZEND_API int string_locale_compare_function(zval *result, zval *op1, zval *op2 TSRMLS_DC);
 #endif
 
-ZEND_API void zend_str_tolower(char *str, unsigned int length);
-ZEND_API char *zend_str_tolower_copy(char *dest, const char *source, unsigned int length);
-ZEND_API char *zend_str_tolower_dup(const char *source, unsigned int length);
+ZEND_API void zend_str_tolower(char *str, zend_string_size length);
+ZEND_API char *zend_str_tolower_copy(char *dest, const char *source, zend_string_size length);
+ZEND_API char *zend_str_tolower_dup(const char *source, zend_string_size length);
 
 ZEND_API int zend_binary_zval_strcmp(zval *s1, zval *s2);
 ZEND_API int zend_binary_zval_strncmp(zval *s1, zval *s2, zval *s3);
 ZEND_API int zend_binary_zval_strcasecmp(zval *s1, zval *s2);
 ZEND_API int zend_binary_zval_strncasecmp(zval *s1, zval *s2, zval *s3);
-ZEND_API int zend_binary_strcmp(const char *s1, uint len1, const char *s2, uint len2);
-ZEND_API int zend_binary_strncmp(const char *s1, uint len1, const char *s2, uint len2, uint length);
-ZEND_API int zend_binary_strcasecmp(const char *s1, uint len1, const char *s2, uint len2);
-ZEND_API int zend_binary_strncasecmp(const char *s1, uint len1, const char *s2, uint len2, uint length);
-ZEND_API int zend_binary_strncasecmp_l(const char *s1, uint len1, const char *s2, uint len2, uint length);
+ZEND_API int zend_binary_strcmp(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2);
+ZEND_API int zend_binary_strncmp(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2, zend_string_size length);
+ZEND_API int zend_binary_strcasecmp(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2);
+ZEND_API int zend_binary_strncasecmp(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2, zend_string_size length);
+ZEND_API int zend_binary_strncasecmp_l(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2, zend_string_size length);
 
 ZEND_API void zendi_smart_strcmp(zval *result, zval *s1, zval *s2);
 ZEND_API void zend_compare_symbol_tables(zval *result, HashTable *ht1, HashTable *ht2 TSRMLS_DC);
 ZEND_API void zend_compare_arrays(zval *result, zval *a1, zval *a2 TSRMLS_DC);
 ZEND_API void zend_compare_objects(zval *result, zval *o1, zval *o2 TSRMLS_DC);
 
-ZEND_API int zend_atoi(const char *str, int str_len);
-ZEND_API long zend_atol(const char *str, int str_len);
+ZEND_API int zend_atoi(const char *str, zend_string_size str_len);
+ZEND_API long zend_atol(const char *str, zend_string_size str_len);
 
 ZEND_API void zend_locale_sprintf_double(zval *op ZEND_FILE_LINE_DC);
 END_EXTERN_C()
@@ -441,7 +441,8 @@ END_EXTERN_C()
 #define Z_BVAL(zval)			((zend_bool)(zval).value.lval)
 #define Z_DVAL(zval)			(zval).value.dval
 #define Z_STRVAL(zval)			(zval).value.str.val
-#define Z_STRLEN(zval)			(zval).value.str.len
+#define Z_STRLEN(zval)			((zval).value.str.len)
+#define Z_STRSIZE(zval)			(zval).value.str.len
 #define Z_ARRVAL(zval)			(zval).value.ht
 #define Z_OBJVAL(zval)			(zval).value.obj
 #define Z_OBJ_HANDLE(zval)		Z_OBJVAL(zval).handle
@@ -457,6 +458,7 @@ END_EXTERN_C()
 #define Z_DVAL_P(zval_p)		Z_DVAL(*zval_p)
 #define Z_STRVAL_P(zval_p)		Z_STRVAL(*zval_p)
 #define Z_STRLEN_P(zval_p)		Z_STRLEN(*zval_p)
+#define Z_STRSIZE_P(zval_p)		Z_STRSIZE(*zval_p)
 #define Z_ARRVAL_P(zval_p)		Z_ARRVAL(*zval_p)
 #define Z_OBJPROP_P(zval_p)		Z_OBJPROP(*zval_p)
 #define Z_OBJCE_P(zval_p)		Z_OBJCE(*zval_p)
@@ -472,6 +474,7 @@ END_EXTERN_C()
 #define Z_DVAL_PP(zval_pp)		Z_DVAL(**zval_pp)
 #define Z_STRVAL_PP(zval_pp)	Z_STRVAL(**zval_pp)
 #define Z_STRLEN_PP(zval_pp)	Z_STRLEN(**zval_pp)
+#define Z_STRSIZE_PP(zval_pp)	Z_STRSIZE(**zval_pp)
 #define Z_ARRVAL_PP(zval_pp)	Z_ARRVAL(**zval_pp)
 #define Z_OBJPROP_PP(zval_pp)	Z_OBJPROP(**zval_pp)
 #define Z_OBJCE_PP(zval_pp)		Z_OBJCE(**zval_pp)
