@@ -735,7 +735,7 @@ finish:
 					SEPARATE_ZVAL(tmpzval);
 					convert_to_long_ex(tmpzval);
 					follow_location = Z_LVAL_PP(tmpzval);
-				} else if (!(response_code >= 300 && response_code < 304 || 307 == response_code)) { 
+				} else if (!((response_code >= 300 && response_code < 304) || 307 == response_code)) { 
 					/* we shouldn't redirect automatically
 					if follow_location isn't set and response_code not in (300, 301, 302, 303 and 307) 
 					see http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.3.1 */

@@ -633,7 +633,7 @@ _crypt_extended_r(const char *key, const char *setting,
 		if (*key)
 			key++;
 	}
-	if (des_setkey((u_char *) keybuf, data))
+	if (des_setkey((char *) keybuf, data))
 		return(NULL);
 
 	if (*setting == _PASSWORD_EFMT1) {
@@ -662,7 +662,7 @@ _crypt_extended_r(const char *key, const char *setting,
 			/*
 			 * Encrypt the key with itself.
 			 */
-			if (des_cipher((u_char *) keybuf, (u_char *) keybuf,
+			if (des_cipher((char *) keybuf, (char *) keybuf,
 			    0, 1, data))
 				return(NULL);
 			/*
@@ -672,7 +672,7 @@ _crypt_extended_r(const char *key, const char *setting,
 			while (q - (u_char *) keybuf < sizeof(keybuf) && *key)
 				*q++ ^= *key++ << 1;
 
-			if (des_setkey((u_char *) keybuf, data))
+			if (des_setkey((char *) keybuf, data))
 				return(NULL);
 		}
 		memcpy(data->output, setting, 9);

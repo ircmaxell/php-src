@@ -916,7 +916,7 @@ static int spl_array_compare_objects(zval *o1, zval *o2 TSRMLS_DC) /* {{{ */
 static int spl_array_skip_protected(spl_array_object *intern, HashTable *aht TSRMLS_DC) /* {{{ */
 {
 	char *string_key;
-	uint string_length;
+	zend_string_size string_length;
 	ulong num_key;
 
 	if (Z_TYPE_P(intern->array) == IS_OBJECT) {

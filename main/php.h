@@ -33,6 +33,7 @@
 #include "php_version.h"
 #include "zend.h"
 #include "zend_qsort.h"
+#include "zend_types.h"
 #include "php_compat.h"
 
 #include "zend_API.h"
@@ -109,7 +110,7 @@
 
 #define PHP_STRLCPY(dst, src, size, src_size)	\
 	{											\
-		size_t php_str_len;						\
+		zend_string_size php_str_len;						\
 												\
 		if (src_size >= size)					\
 			php_str_len = size - 1;				\
@@ -121,7 +122,7 @@
 
 #ifndef HAVE_STRLCPY
 BEGIN_EXTERN_C()
-PHPAPI size_t php_strlcpy(char *dst, const char *src, size_t siz);
+PHPAPI zend_string_size php_strlcpy(char *dst, const char *src, zend_string_size siz);
 END_EXTERN_C()
 #undef strlcpy
 #define strlcpy php_strlcpy
@@ -129,7 +130,7 @@ END_EXTERN_C()
 
 #ifndef HAVE_STRLCAT
 BEGIN_EXTERN_C()
-PHPAPI size_t php_strlcat(char *dst, const char *src, size_t siz);
+PHPAPI zend_string_size php_strlcat(char *dst, const char *src, zend_string_size siz);
 END_EXTERN_C()
 #undef strlcat
 #define strlcat php_strlcat
@@ -277,8 +278,8 @@ ssize_t pread(int, void *, size_t, off64_t);
 
 BEGIN_EXTERN_C()
 void phperror(char *error);
-PHPAPI int php_write(void *buf, uint size TSRMLS_DC);
-PHPAPI int php_printf(const char *format, ...) PHP_ATTRIBUTE_FORMAT(printf, 1,
+PHPAPI zend_string_size php_write(void *buf, zend_string_size size TSRMLS_DC);
+PHPAPI zend_string_size php_printf(const char *format, ...) PHP_ATTRIBUTE_FORMAT(printf, 1,
 		2);
 PHPAPI int php_get_module_initialized(void);
 PHPAPI void php_log_err(char *log_message TSRMLS_DC);

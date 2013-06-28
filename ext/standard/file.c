@@ -568,9 +568,9 @@ PHP_FUNCTION(file_put_contents)
 {
 	php_stream *stream;
 	char *filename;
-	int filename_len;
+	zend_string_size filename_len;
 	zval *data;
-	int numbytes = 0;
+	zend_string_size numbytes = 0;
 	long flags = 0;
 	zval *zcontext = NULL;
 	php_stream_context *context = NULL;
@@ -634,10 +634,10 @@ PHP_FUNCTION(file_put_contents)
 			convert_to_string_ex(&data);
 
 		case IS_STRING:
-			if (Z_STRLEN_P(data)) {
-				numbytes = php_stream_write(stream, Z_STRVAL_P(data), Z_STRLEN_P(data));
-				if (numbytes != Z_STRLEN_P(data)) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %d of %d bytes written, possibly out of free disk space", numbytes, Z_STRLEN_P(data));
+			if (Z_STRSIZE_P(data)) {
+				numbytes = php_stream_write(stream, Z_STRVAL_P(data), Z_STRSIZE_P(data));
+				if (numbytes != Z_STRSIZE_P(data)) {
+					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %lu of %lu bytes written, possibly out of free disk space", numbytes, Z_STRSIZE_P(data));
 					numbytes = -1;
 				}
 			}
@@ -645,7 +645,7 @@ PHP_FUNCTION(file_put_contents)
 
 		case IS_ARRAY:
 			if (zend_hash_num_elements(Z_ARRVAL_P(data))) {
-				int bytes_written;
+				zend_string_size bytes_written;
 				zval **tmp;
 				HashPosition pos;
 
@@ -655,14 +655,14 @@ PHP_FUNCTION(file_put_contents)
 						SEPARATE_ZVAL(tmp);
 						convert_to_string(*tmp);
 					}
-					if (Z_STRLEN_PP(tmp)) {
-						numbytes += Z_STRLEN_PP(tmp);
-						bytes_written = php_stream_write(stream, Z_STRVAL_PP(tmp), Z_STRLEN_PP(tmp));
-						if (bytes_written < 0 || bytes_written != Z_STRLEN_PP(tmp)) {
+					if (Z_STRSIZE_PP(tmp)) {
+						numbytes += Z_STRSIZE_PP(tmp);
+						bytes_written = php_stream_write(stream, Z_STRVAL_PP(tmp), Z_STRSIZE_PP(tmp));
+						if (bytes_written < 0 || bytes_written != Z_STRSIZE_PP(tmp)) {
 							if (bytes_written < 0) {
-								php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to write %d bytes to %s", Z_STRLEN_PP(tmp), filename);
+								php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to write %lu bytes to %s", (unsigned long) Z_STRSIZE_PP(tmp), filename);
 							} else {
-								php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %d of %d bytes written, possibly out of free disk space", bytes_written, Z_STRLEN_PP(tmp));
+								php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %lu of %lu bytes written, possibly out of free disk space", bytes_written, Z_STRSIZE_PP(tmp));
 							}
 							numbytes = -1;
 							break;
@@ -678,9 +678,9 @@ PHP_FUNCTION(file_put_contents)
 				zval out;
 
 				if (zend_std_cast_object_tostring(data, &out, IS_STRING TSRMLS_CC) == SUCCESS) {
-					numbytes = php_stream_write(stream, Z_STRVAL(out), Z_STRLEN(out));
-					if (numbytes != Z_STRLEN(out)) {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %d of %d bytes written, possibly out of free disk space", numbytes, Z_STRLEN(out));
+					numbytes = php_stream_write(stream, Z_STRVAL(out), Z_STRSIZE(out));
+					if (numbytes != Z_STRSIZE(out)) {
+						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only %lu of %lu bytes written, possibly out of free disk space", numbytes, Z_STRSIZE(out));
 						numbytes = -1;
 					}
 					zval_dtor(&out);
@@ -1027,7 +1027,7 @@ PHPAPI PHP_FUNCTION(fgets)
 	ZVAL_STRINGL(return_value, buf, line_len, 0);
 	/* resize buffer if it's much larger than the result.
 	 * Only needed if the user requested a buffer size. */
-	if (argc > 1 && Z_STRLEN_P(return_value) < len / 2) {
+	if (argc > 1 && Z_STRSIZE_P(return_value) < len / 2) {
 		Z_STRVAL_P(return_value) = erealloc(buf, line_len + 1);
 	}
 	return;
@@ -1751,10 +1751,10 @@ PHPAPI PHP_FUNCTION(fread)
 	}
 
 	Z_STRVAL_P(return_value) = emalloc(len + 1);
-	Z_STRLEN_P(return_value) = php_stream_read(stream, Z_STRVAL_P(return_value), len);
+	Z_STRSIZE_P(return_value) = php_stream_read(stream, Z_STRVAL_P(return_value), len);
 
 	/* needed because recv/read/gzread doesnt put a null at the end*/
-	Z_STRVAL_P(return_value)[Z_STRLEN_P(return_value)] = 0;
+	Z_STRVAL_P(return_value)[Z_STRSIZE_P(return_value)] = 0;
 	Z_TYPE_P(return_value) = IS_STRING;
 }
 /* }}} */
@@ -1797,7 +1797,7 @@ quit_loop:
 }
 /* }}} */
 
-#define FPUTCSV_FLD_CHK(c) memchr(Z_STRVAL(field), c, Z_STRLEN(field))
+#define FPUTCSV_FLD_CHK(c) memchr(Z_STRVAL(field), c, Z_STRSIZE(field))
 
 /* {{{ proto int fputcsv(resource fp, array fields [, string delimiter [, string enclosure]])
    Format line as CSV and write to file pointer */
@@ -1877,7 +1877,7 @@ PHPAPI int php_fputcsv(php_stream *stream, zval *fields, char delimiter, char en
 			FPUTCSV_FLD_CHK(' ')
 		) {
 			char *ch = Z_STRVAL(field);
-			char *end = ch + Z_STRLEN(field);
+			char *end = ch + Z_STRSIZE(field);
 			int escaped = 0;
 
 			smart_str_appendc(&csvline, enclosure);
@@ -1894,7 +1894,7 @@ PHPAPI int php_fputcsv(php_stream *stream, zval *fields, char delimiter, char en
 			}
 			smart_str_appendc(&csvline, enclosure);
 		} else {
-			smart_str_appendl(&csvline, Z_STRVAL(field), Z_STRLEN(field));
+			smart_str_appendl(&csvline, Z_STRVAL(field), Z_STRSIZE(field));
 		}
 
 		if (++i != count) {

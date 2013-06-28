@@ -75,7 +75,7 @@
 
 /* {{{ php_iptc_put1
  */
-static int php_iptc_put1(FILE *fp, int spool, unsigned char c, unsigned char **spoolbuf TSRMLS_DC)
+static int php_iptc_put1(FILE *fp, int spool, char c, char **spoolbuf TSRMLS_DC)
 { 
 	if (spool > 0)
 		PUTC(c);
@@ -164,7 +164,7 @@ static int php_iptc_next_marker(FILE *fp, int spool, unsigned char **spoolbuf TS
             return M_EOI;       /* we hit EOF */
 		else
 		if (c == 0xff)
-			php_iptc_put1(fp, spool, (unsigned char)c, spoolbuf TSRMLS_CC);
+			php_iptc_put1(fp, spool, (char) c, (char **) spoolbuf TSRMLS_CC);
     } while (c == 0xff);
 
     return (unsigned int) c;
@@ -229,7 +229,7 @@ PHP_FUNCTION(iptcembed)
 		if (marker == M_EOI) { /* EOF */
 			break;
 		} else if (marker != M_APP13) { 
-			php_iptc_put1(fp, spool, (unsigned char)marker, poi?&poi:0 TSRMLS_CC);
+			php_iptc_put1(fp, spool, (char)marker, (char**) (poi?&poi:0) TSRMLS_CC);
 		}
 
 		switch (marker) {
@@ -259,14 +259,14 @@ PHP_FUNCTION(iptcembed)
 				psheader[ 3 ] = (iptcdata_len+28)&0xff;
 
 				for (inx = 0; inx < 28; inx++) {
-					php_iptc_put1(fp, spool, psheader[inx], poi?&poi:0 TSRMLS_CC);
+					php_iptc_put1(fp, spool, (char) psheader[inx], (char**) (poi?&poi:0) TSRMLS_CC);
 				}
 
-				php_iptc_put1(fp, spool, (unsigned char)(iptcdata_len>>8), poi?&poi:0 TSRMLS_CC);
-				php_iptc_put1(fp, spool, (unsigned char)(iptcdata_len&0xff), poi?&poi:0 TSRMLS_CC);
+				php_iptc_put1(fp, spool, (char)(iptcdata_len>>8), (char**) (poi?&poi:0) TSRMLS_CC);
+				php_iptc_put1(fp, spool, (char)(iptcdata_len&0xff), (char**) (poi?&poi:0) TSRMLS_CC);
 
 				for (inx = 0; inx < iptcdata_len; inx++) {
-					php_iptc_put1(fp, spool, iptcdata[inx], poi?&poi:0 TSRMLS_CC);
+					php_iptc_put1(fp, spool, (char) iptcdata[inx], (char**) (poi?&poi:0) TSRMLS_CC);
 				}
 				break;
 
@@ -285,7 +285,7 @@ PHP_FUNCTION(iptcembed)
 	fclose(fp);
 
 	if (spool < 2) {
-		RETVAL_STRINGL(spoolbuf, poi - spoolbuf, 0);
+		RETVAL_STRINGL((char*) spoolbuf, poi - spoolbuf, 0);
 	} else {
 		RETURN_TRUE;
 	}
@@ -300,7 +300,7 @@ PHP_FUNCTION(iptcparse)
 	unsigned int tagsfound = 0;
 	unsigned char *buffer, recnum, dataset, key[ 16 ];
 	char *str;
-	int str_len;
+	zend_string_size str_len;
 	zval *values, **element;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) != SUCCESS) {
@@ -341,20 +341,20 @@ PHP_FUNCTION(iptcparse)
 			break;
 		}
 
-		snprintf(key, sizeof(key), "%d#%03d", (unsigned int) dataset, (unsigned int) recnum);
+		snprintf((char*) key, sizeof(key), "%d#%03d", (unsigned int) dataset, (unsigned int) recnum);
 
 		if (tagsfound == 0) { /* found the 1st tag - initialize the return array */
 			array_init(return_value);
 		}
 
-		if (zend_hash_find(Z_ARRVAL_P(return_value), key, strlen(key) + 1, (void **) &element) == FAILURE) {
+		if (zend_hash_find(Z_ARRVAL_P(return_value), (char*) key, strlen((char*) key) + 1, (void **) &element) == FAILURE) {
 			MAKE_STD_ZVAL(values);
 			array_init(values);
 			
-			zend_hash_update(Z_ARRVAL_P(return_value), key, strlen(key) + 1, (void *) &values, sizeof(zval*), (void **) &element);
+			zend_hash_update(Z_ARRVAL_P(return_value), (char*) key, strlen((char*) key) + 1, (void *) &values, sizeof(zval*), (void **) &element);
 		} 
 			
-		add_next_index_stringl(*element, buffer+inx, len, 1);
+		add_next_index_stringl(*element, (char*) (buffer+inx), len, 1);
 		inx += len;
 		tagsfound++;
 	}

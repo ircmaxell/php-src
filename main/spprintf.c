@@ -792,7 +792,7 @@ skip_output:
 /*
  * This is the general purpose conversion function.
  */
-PHPAPI int vspprintf(char **pbuf, size_t max_len, const char *format, va_list ap) /* {{{ */
+PHPAPI zend_string_size vspprintf(char **pbuf, zend_string_size max_len, const char *format, va_list ap) /* {{{ */
 {
 	smart_str xbuf = {0};
 
@@ -809,9 +809,9 @@ PHPAPI int vspprintf(char **pbuf, size_t max_len, const char *format, va_list ap
 }
 /* }}} */
 
-PHPAPI int spprintf(char **pbuf, size_t max_len, const char *format, ...) /* {{{ */
+PHPAPI zend_string_size spprintf(char **pbuf, zend_string_size max_len, const char *format, ...) /* {{{ */
 {
-	int cc;
+	zend_string_size cc;
 	va_list ap;
 
 	va_start(ap, format);

@@ -246,7 +246,7 @@ static php_stream *php_ftp_fopen_connect(php_stream_wrapper *wrapper, char *path
 	if (resource->user != NULL) {
 		tmp_len = php_raw_url_decode(resource->user, strlen(resource->user));
 
-		PHP_FTP_CNTRL_CHK(resource->user, tmp_len, "Invalid login %s")
+		PHP_FTP_CNTRL_CHK((unsigned char*) resource->user, tmp_len, "Invalid login %s")
 
 		php_stream_printf(stream TSRMLS_CC, "USER %s\r\n", resource->user);
 	} else {
@@ -263,7 +263,7 @@ static php_stream *php_ftp_fopen_connect(php_stream_wrapper *wrapper, char *path
 		if (resource->pass != NULL) {
 			tmp_len = php_raw_url_decode(resource->pass, strlen(resource->pass));
 
-			PHP_FTP_CNTRL_CHK(resource->pass, tmp_len, "Invalid password %s")
+			PHP_FTP_CNTRL_CHK((unsigned char*) resource->pass, tmp_len, "Invalid password %s")
 
 			php_stream_printf(stream TSRMLS_CC, "PASS %s\r\n", resource->pass);
 		} else {

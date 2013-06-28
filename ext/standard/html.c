@@ -923,9 +923,9 @@ static inline size_t write_octet_sequence(unsigned char *buf, enum entity_charse
 #define TRAVERSE_FOR_ENTITIES_EXPAND_SIZE(oldlen) ((oldlen) + (oldlen) / 5 + 2)
 static void traverse_for_entities(
 	const char *old,
-	size_t oldlen,
+	zend_string_size oldlen,
 	char *ret, /* should have allocated TRAVERSE_FOR_ENTITIES_EXPAND_SIZE(olden) */
-	size_t *retlen,
+	zend_string_size *retlen,
 	int all,
 	int flags,
 	const entity_ht *inv_map,
@@ -1012,9 +1012,9 @@ static void traverse_for_entities(
 				goto invalid_code; /* not representable in target charset */
 		}
 
-		q += write_octet_sequence(q, charset, code);
+		q += write_octet_sequence((unsigned char*) q, charset, code);
 		if (code2) {
-			q += write_octet_sequence(q, charset, code2);
+			q += write_octet_sequence((unsigned char*)q, charset, code2);
 		}
 
 		/* jump over the valid entity; may go beyond size of buffer; np */
@@ -1115,7 +1115,7 @@ PHPAPI char *php_unescape_html_entities(unsigned char *old, size_t oldlen, size_
 	inverse_map = unescape_inverse_map(all, flags);
 	
 	/* replace numeric entities */
-	traverse_for_entities(old, oldlen, ret, &retlen, all, flags, inverse_map, charset);
+	traverse_for_entities((char*) old, oldlen, ret, &retlen, all, flags, inverse_map, charset);
 
 empty_source:	
 	*newlen = retlen;
@@ -1134,10 +1134,10 @@ static inline void find_entity_for_char(
 	enum entity_charset charset,
 	const entity_stage1_row *table,
 	const unsigned char **entity,
-	size_t *entity_len,
+	zend_string_size *entity_len,
 	unsigned char *old,
-	size_t oldlen,
-	size_t *cursor)
+	zend_string_size oldlen,
+	zend_string_size *cursor)
 {
 	unsigned stage1_idx = ENT_STAGE1_INDEX(k);
 	const entity_stage3_row *c;
@@ -1155,7 +1155,7 @@ static inline void find_entity_for_char(
 		*entity_len = c->data.ent.entity_len;
 	} else {
 		/* peek at next char */
-		size_t	 cursor_before	= *cursor;
+		zend_string_size	 cursor_before	= *cursor;
 		int		 status			= SUCCESS;
 		unsigned next_char;
 
@@ -1176,7 +1176,7 @@ static inline void find_entity_for_char(
 			 * at most two entries... */
 			for ( ; s <= e; s++) {
 				if (s->normal_entry.second_cp == next_char) {
-					*entity     = s->normal_entry.entity;
+					*entity     = (unsigned char*) s->normal_entry.entity;
 					*entity_len = s->normal_entry.entity_len;
 					return;
 				}
@@ -1204,7 +1204,7 @@ static inline void find_entity_for_char_basic(
 		return;
 	}
 
-	*entity     = table[k].data.ent.entity;
+	*entity     = (unsigned char*) table[k].data.ent.entity;
 	*entity_len = table[k].data.ent.entity_len;
 }
 /* }}} */
@@ -1390,7 +1390,7 @@ encode_amp:
 					ent_len = pos - (char*)&old[cursor];
 				} else { /* named entity */
 					/* check for vality of named entity */
-					const char *start = &old[cursor],
+					const char *start = (char *) &old[cursor],
 							   *next = start;
 					unsigned   dummy1, dummy2;
 
@@ -1443,7 +1443,7 @@ static void php_html_entities(INTERNAL_FUNCTION_PARAMETERS, int all)
 		return;
 	}
 
-	replaced = php_escape_html_entities_ex(str, str_len, &new_len, all, (int) flags, hint_charset, double_encode TSRMLS_CC);
+	replaced = php_escape_html_entities_ex((unsigned char*) str, str_len, &new_len, all, (int) flags, hint_charset, double_encode TSRMLS_CC);
 	RETVAL_STRINGL(replaced, (int)new_len, 0);
 }
 /* }}} */
@@ -1492,7 +1492,7 @@ PHP_FUNCTION(htmlspecialchars_decode)
 		return;
 	}
 
-	replaced = php_unescape_html_entities(str, str_len, &new_len, 0 /*!all*/, quote_style, NULL TSRMLS_CC);
+	replaced = php_unescape_html_entities((unsigned char*)str, str_len, &new_len, 0 /*!all*/, quote_style, NULL TSRMLS_CC);
 	if (replaced) {
 		RETURN_STRINGL(replaced, (int)new_len, 0);
 	}
@@ -1515,7 +1515,7 @@ PHP_FUNCTION(html_entity_decode)
 		return;
 	}
 
-	replaced = php_unescape_html_entities(str, str_len, &new_len, 1 /*all*/, quote_style, hint_charset TSRMLS_CC);
+	replaced = php_unescape_html_entities((unsigned char*) str, str_len, &new_len, 1 /*all*/, quote_style, hint_charset TSRMLS_CC);
 	if (replaced) {
 		RETURN_STRINGL(replaced, (int)new_len, 0);
 	}
@@ -1543,7 +1543,7 @@ static inline void write_s3row_data(
 	char entity[LONGEST_ENTITY_LENGTH + 2] = {'&'};
 	size_t written_k1;
 
-	written_k1 = write_octet_sequence(key, charset, orig_cp);
+	written_k1 = write_octet_sequence((unsigned char*) key, charset, orig_cp);
 
 	if (!r->ambiguous) {
 		size_t l = r->data.ent.entity_len;
@@ -1578,7 +1578,7 @@ static inline void write_s3row_data(
 				spe_cp = uni_cp;
 			}
 			
-			written_k2 = write_octet_sequence(&key[written_k1], charset, spe_cp);
+			written_k2 = write_octet_sequence((unsigned char*) &key[written_k1], charset, spe_cp);
 			memcpy(&entity[1], mcpr[i].normal_entry.entity, l);
 			entity[l + 1] = ';';
 			entity[l + 1] = '\0';

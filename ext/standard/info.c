@@ -61,10 +61,10 @@ PHPAPI extern char *php_ini_opened_path;
 PHPAPI extern char *php_ini_scanned_path;
 PHPAPI extern char *php_ini_scanned_files;
 
-static int php_info_print_html_esc(const char *str, int len) /* {{{ */
+static int php_info_print_html_esc(const char *str, zend_string_size len) /* {{{ */
 {
 	size_t new_len;
-	int written;
+	zend_string_size written;
 	char *new_str;
 	TSRMLS_FETCH();
 	
@@ -78,7 +78,7 @@ static int php_info_print_html_esc(const char *str, int len) /* {{{ */
 static int php_info_printf(const char *fmt, ...) /* {{{ */
 {
 	char *buf;
-	int len, written;
+	zend_string_size len, written;
 	va_list argv;
 	TSRMLS_FETCH();
 	
@@ -102,7 +102,7 @@ static int php_info_print(const char *str) /* {{{ */
 static void php_info_print_stream_hash(const char *name, HashTable *ht TSRMLS_DC) /* {{{ */
 {
 	char *key;
-	uint len;
+	zend_string_size len;
 	
 	if (ht) {
 		if (zend_hash_num_elements(ht)) {
@@ -196,7 +196,7 @@ static void php_print_gpcse_array(char *name, uint name_length TSRMLS_DC)
 {
 	zval **data, **tmp, tmp2;
 	char *string_key;
-	uint string_len;
+	zend_string_size string_len;
 	ulong num_key;
 
 	zend_is_auto_global(name, name_length TSRMLS_CC);
@@ -286,8 +286,8 @@ void php_info_print_style(TSRMLS_D)
  */
 PHPAPI char *php_info_html_esc(char *string TSRMLS_DC)
 {
-	size_t new_len;
-	return php_escape_html_entities(string, strlen(string), &new_len, 0, ENT_QUOTES, NULL TSRMLS_CC);
+	zend_string_size new_len;
+	return php_escape_html_entities((unsigned char*) string, strlen(string), &new_len, 0, ENT_QUOTES, NULL TSRMLS_CC);
 }
 /* }}} */
 
