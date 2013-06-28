@@ -568,7 +568,7 @@ fprintf(stderr, "stream_free: %s:%p[%s] preserve_handle=%d release_cast=%d remov
 
 /* {{{ generic stream operations */
 
-static void php_stream_fill_read_buffer(php_stream *stream, size_t size TSRMLS_DC)
+static void php_stream_fill_read_buffer(php_stream *stream, zend_string_size size TSRMLS_DC)
 {
 	/* allocate/fill the buffer */
 
@@ -586,7 +586,7 @@ static void php_stream_fill_read_buffer(php_stream *stream, size_t size TSRMLS_D
 		chunk_buf = emalloc(stream->chunk_size);
 
 		while (!stream->eof && !err_flag && (stream->writepos - stream->readpos < (off_t)size)) {
-			size_t justread = 0;
+			zend_string_size justread = 0;
 			int flags;
 			php_stream_bucket *bucket;
 			php_stream_filter_status_t status = PSFS_ERR_FATAL;
@@ -662,7 +662,7 @@ static void php_stream_fill_read_buffer(php_stream *stream, size_t size TSRMLS_D
 					break;
 			}
 
-			if (justread == 0 || justread == (size_t)-1) {
+			if (justread == 0 || justread == (zend_string_size)-1) {
 				break;
 			}
 		}
@@ -672,7 +672,7 @@ static void php_stream_fill_read_buffer(php_stream *stream, size_t size TSRMLS_D
 	} else {
 		/* is there enough data in the buffer ? */
 		if (stream->writepos - stream->readpos < (off_t)size) {
-			size_t justread = 0;
+			zend_string_size justread = 0;
 
 			/* reduce buffer memory consumption if possible, to avoid a realloc */
 			if (stream->readbuf && stream->readbuflen - stream->writepos < stream->chunk_size) {
@@ -689,7 +689,7 @@ static void php_stream_fill_read_buffer(php_stream *stream, size_t size TSRMLS_D
 						stream->is_persistent);
 			}
 
-			justread = stream->ops->read(stream, stream->readbuf + stream->writepos,
+			justread = stream->ops->read(stream, (char*) (stream->readbuf + stream->writepos),
 					stream->readbuflen - stream->writepos
 					TSRMLS_CC);
 
@@ -785,7 +785,7 @@ PHPAPI int _php_stream_eof(php_stream *stream TSRMLS_DC)
 
 PHPAPI int _php_stream_putc(php_stream *stream, int c TSRMLS_DC)
 {
-	unsigned char buf = c;
+	char buf = c;
 
 	if (php_stream_write(stream, &buf, 1) > 0) {
 		return 1;
@@ -842,7 +842,7 @@ PHPAPI char *php_stream_locate_eol(php_stream *stream, char *buf, size_t buf_len
 	char *readptr;
 
 	if (!buf) {
-		readptr = stream->readbuf + stream->readpos;
+		readptr = (char*) (stream->readbuf + stream->readpos);
 		avail = stream->writepos - stream->readpos;
 	} else {
 		readptr = buf;
@@ -914,7 +914,7 @@ PHPAPI char *_php_stream_get_line(php_stream *stream, char *buf, size_t maxlen,
 			char *eol;
 			int done = 0;
 
-			readptr = stream->readbuf + stream->readpos;
+			readptr = (char*) (stream->readbuf + stream->readpos);
 			eol = php_stream_locate_eol(stream, NULL, 0 TSRMLS_CC);
 
 			if (eol) {

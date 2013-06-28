@@ -49,7 +49,7 @@ BOOL WINAPI IsDebuggerPresent(VOID);
 
 /* true multithread-shared globals */
 ZEND_API zend_class_entry *zend_standard_class_def = NULL;
-ZEND_API int (*zend_printf)(const char *format, ...);
+ZEND_API zend_string_size (*zend_printf)(const char *format, ...);
 ZEND_API zend_write_func_t zend_write;
 ZEND_API FILE *(*zend_fopen)(const char *filename, char **opened_path TSRMLS_DC);
 ZEND_API int (*zend_stream_open_function)(const char *filename, zend_file_handle *handle TSRMLS_DC);
@@ -57,7 +57,7 @@ ZEND_API void (*zend_block_interruptions)(void);
 ZEND_API void (*zend_unblock_interruptions)(void);
 ZEND_API void (*zend_ticks_function)(int ticks);
 ZEND_API void (*zend_error_cb)(int type, const char *error_filename, const uint error_lineno, const char *format, va_list args);
-int (*zend_vspprintf)(char **pbuf, zend_string_size max_len, const char *format, va_list ap);
+zend_string_size (*zend_vspprintf)(char **pbuf, zend_string_size max_len, const char *format, va_list ap);
 ZEND_API char *(*zend_getenv)(char *name, zend_string_size name_len TSRMLS_DC);
 ZEND_API char *(*zend_resolve_path)(const char *filename, zend_string_size filename_len TSRMLS_DC);
 

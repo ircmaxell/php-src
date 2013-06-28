@@ -492,7 +492,7 @@ static int sapi_cli_server_startup(sapi_module_struct *sapi_module) /* {{{ */
 	return SUCCESS;
 } /* }}} */
 
-static int sapi_cli_server_ub_write(const char *str, uint str_length TSRMLS_DC) /* {{{ */
+static zend_string_size sapi_cli_server_ub_write(const char *str, zend_string_size str_length TSRMLS_DC) /* {{{ */
 {
 	php_cli_server_client *client = SG(server_context);
 	if (!client) {
@@ -574,12 +574,12 @@ static char *sapi_cli_server_read_cookies(TSRMLS_D) /* {{{ */
 	return *val;
 } /* }}} */
 
-static int sapi_cli_server_read_post(char *buf, uint count_bytes TSRMLS_DC) /* {{{ */
+static zend_string_size sapi_cli_server_read_post(char *buf, zend_string_size count_bytes TSRMLS_DC) /* {{{ */
 {
 	php_cli_server_client *client = SG(server_context);
 	if (client->request.content) {
-		size_t content_len = client->request.content_len;
-		size_t nbytes_copied = MIN(client->post_read_offset + count_bytes, content_len) - client->post_read_offset;
+		zend_string_size content_len = client->request.content_len;
+		zend_string_size nbytes_copied = MIN(client->post_read_offset + count_bytes, content_len) - client->post_read_offset;
 		memmove(buf, client->request.content + client->post_read_offset, nbytes_copied);
 		client->post_read_offset += nbytes_copied;
 		return nbytes_copied;
@@ -590,7 +590,7 @@ static int sapi_cli_server_read_post(char *buf, uint count_bytes TSRMLS_DC) /* {
 static void sapi_cli_server_register_variable(zval *track_vars_array, const char *key, const char *val TSRMLS_DC) /* {{{ */
 {
 	char *new_val = (char *)val;
-	uint new_val_len;
+	zend_string_size new_val_len;
 	if (sapi_module.input_filter(PARSE_SERVER, (char*)key, &new_val, strlen(val), &new_val_len TSRMLS_CC)) {
 		php_register_variable_safe((char *)key, new_val, new_val_len, track_vars_array TSRMLS_CC);
 	}

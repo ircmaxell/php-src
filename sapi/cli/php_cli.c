@@ -285,18 +285,18 @@ PHP_CLI_API size_t sapi_cli_single_write(const char *str, uint str_length TSRMLS
 }
 /* }}} */
 
-static int sapi_cli_ub_write(const char *str, uint str_length TSRMLS_DC) /* {{{ */
+static zend_string_size sapi_cli_ub_write(const char *str, zend_string_size str_length TSRMLS_DC) /* {{{ */
 {
 	const char *ptr = str;
-	uint remaining = str_length;
-	size_t ret;
+	zend_string_size remaining = str_length;
+	zend_string_size ret;
 
 	if (!str_length) {
 		return 0;
 	}
 
 	if (cli_shell_callbacks.cli_shell_ub_write) {
-		int ub_wrote;
+		zend_string_size ub_wrote;
 		ub_wrote = cli_shell_callbacks.cli_shell_ub_write(str, str_length TSRMLS_CC);
 		if (ub_wrote > -1) {
 			return ub_wrote;
@@ -338,7 +338,7 @@ static char *script_filename = "";
 
 static void sapi_cli_register_variables(zval *track_vars_array TSRMLS_DC) /* {{{ */
 {
-	unsigned int len;
+	zend_string_size len;
 	char   *docroot = "";
 
 	/* In CGI mode, we consider the environment to be a part of the server

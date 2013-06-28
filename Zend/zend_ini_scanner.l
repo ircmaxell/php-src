@@ -455,7 +455,7 @@ SECTION_VALUE_CHARS ([^$\n\r;"'\]\\]|("\\"{ANY_CHAR})|{LITERAL_DOLLAR})
 				break;
 			case ';':
 				if (sc == NULL) {
-					sc = YYCURSOR;
+					sc = (char*) YYCURSOR;
 				}
 				/* no break */
 			default:
@@ -476,7 +476,7 @@ end_raw_value_chars:
 		SCNG(yy_text)++;
 		yyleng = yyleng - 2;
 	} else if (sc) {
-		YYCURSOR = sc;
+		YYCURSOR = (unsigned char*) sc;
 		yyleng = YYCURSOR - SCNG(yy_text);
 	}
 	RETURN_TOKEN(TC_RAW, yytext, yyleng);
