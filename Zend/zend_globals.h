@@ -125,7 +125,7 @@ struct _zend_compiler_globals {
 	zend_uint access_type;
 
 	char *doc_comment;
-	zend_uint doc_comment_len;
+	zend_string_size doc_comment_len;
 
 	zend_uint compiler_options; /* set of ZEND_COMPILE_* constants */
 

@@ -861,6 +861,13 @@ else
   ZEND_DEBUG=no
 fi
 
+PHP_ARG_ENABLE(zstrlen, whether to include deprecated Z_STRLEN macros,
+[  --disable-zstrlen       Disable deprecated Z_STRLEN macros], no, no)
+
+if test "$PHP_ZSTRLEN" == "yes"; then
+  ZEND_NO_ZSTRLEN=1
+fi
+
 PHP_ARG_WITH(layout, layout of installed files,
 [  --with-layout=TYPE      Set how installed files will be laid out.  Type can
                           be either PHP or GNU @<:@PHP@:>@], PHP, no)

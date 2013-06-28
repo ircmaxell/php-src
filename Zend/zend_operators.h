@@ -341,7 +341,7 @@ ZEND_API int add_string_to_string(zval *result, const zval *op1, const zval *op2
 #define convert_to_cstring(op) if ((op)->type != IS_STRING) { _convert_to_cstring((op) ZEND_FILE_LINE_CC); }
 #define convert_to_string(op) if ((op)->type != IS_STRING) { _convert_to_string((op) ZEND_FILE_LINE_CC); }
 
-ZEND_API double zend_string_to_double(const char *number, zend_uint length);
+ZEND_API double zend_string_to_double(const char *number, zend_string_size length);
 
 ZEND_API int zval_is_true(zval *op);
 ZEND_API int compare_function(zval *result, zval *op1, zval *op2 TSRMLS_DC);
@@ -436,12 +436,19 @@ END_EXTERN_C()
 		convert_scalar_to_number(*ppzv TSRMLS_CC);					\
 	}
 
+#ifndef ZEND_NO_ZSTRLEN
+
+/* Legacy functions, enabled by default but can be disabled using --disable-zstrlen */
+#define 	Z_STRLEN(zval)			((zval).value.str.len)
+#define 	Z_STRLEN_P(zval_p)		Z_STRLEN(*zval_p)
+#define 	Z_STRLEN_PP(zval_pp)	Z_STRLEN(**zval_pp)
+
+#endif
 
 #define Z_LVAL(zval)			(zval).value.lval
 #define Z_BVAL(zval)			((zend_bool)(zval).value.lval)
 #define Z_DVAL(zval)			(zval).value.dval
 #define Z_STRVAL(zval)			(zval).value.str.val
-#define Z_STRLEN(zval)			((zval).value.str.len)
 #define Z_STRSIZE(zval)			(zval).value.str.len
 #define Z_ARRVAL(zval)			(zval).value.ht
 #define Z_OBJVAL(zval)			(zval).value.obj
@@ -457,7 +464,6 @@ END_EXTERN_C()
 #define Z_BVAL_P(zval_p)		Z_BVAL(*zval_p)
 #define Z_DVAL_P(zval_p)		Z_DVAL(*zval_p)
 #define Z_STRVAL_P(zval_p)		Z_STRVAL(*zval_p)
-#define Z_STRLEN_P(zval_p)		Z_STRLEN(*zval_p)
 #define Z_STRSIZE_P(zval_p)		Z_STRSIZE(*zval_p)
 #define Z_ARRVAL_P(zval_p)		Z_ARRVAL(*zval_p)
 #define Z_OBJPROP_P(zval_p)		Z_OBJPROP(*zval_p)
@@ -473,7 +479,6 @@ END_EXTERN_C()
 #define Z_BVAL_PP(zval_pp)		Z_BVAL(**zval_pp)
 #define Z_DVAL_PP(zval_pp)		Z_DVAL(**zval_pp)
 #define Z_STRVAL_PP(zval_pp)	Z_STRVAL(**zval_pp)
-#define Z_STRLEN_PP(zval_pp)	Z_STRLEN(**zval_pp)
 #define Z_STRSIZE_PP(zval_pp)	Z_STRSIZE(**zval_pp)
 #define Z_ARRVAL_PP(zval_pp)	Z_ARRVAL(**zval_pp)
 #define Z_OBJPROP_PP(zval_pp)	Z_OBJPROP(**zval_pp)

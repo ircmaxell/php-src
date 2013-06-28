@@ -28,7 +28,7 @@
 #endif
 
 #if ZEND_BROKEN_SPRINTF
-int zend_sprintf(char *buffer, const char *format, ...)
+zend_string_size zend_sprintf(char *buffer, const char *format, ...)
 {
 	va_list args;
 

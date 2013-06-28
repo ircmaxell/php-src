@@ -1014,7 +1014,7 @@ ZEND_FUNCTION(get_object_vars)
 	while (zend_hash_get_current_data_ex(properties, (void **) &value, &pos) == SUCCESS) {
 		if (zend_hash_get_current_key_ex(properties, &key, &key_len, &num_index, 0, &pos) == HASH_KEY_IS_STRING) {
 			if (zend_check_property_access(zobj, key, key_len-1 TSRMLS_CC) == SUCCESS) {
-				zend_unmangle_property_name_ex(key, key_len - 1, &class_name, &prop_name, (int*) &prop_len);
+				zend_unmangle_property_name_ex(key, key_len - 1, &class_name, &prop_name, &prop_len);
 				/* Not separating references */
 				Z_ADDREF_PP(value);
 				add_assoc_zval_ex(return_value, prop_name, prop_len + 1, *value);
@@ -1390,7 +1390,7 @@ ZEND_FUNCTION(class_alias)
 {
 	char *class_name, *lc_name, *alias_name;
 	zend_class_entry **ce;
-	zend_string_szie class_name_len, alias_name_len;
+	zend_string_size class_name_len, alias_name_len;
 	int found;
 	zend_bool autoload = 1;
 	ALLOCA_FLAG(use_heap)

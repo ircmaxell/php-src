@@ -50,7 +50,7 @@
 
 ZEND_DLIMPORT int isatty(int fd);
 
-static size_t zend_stream_stdio_reader(void *handle, char *buf, size_t len TSRMLS_DC) /* {{{ */
+static zend_string_size zend_stream_stdio_reader(void *handle, char *buf, zend_string_size len TSRMLS_DC) /* {{{ */
 {
 	return fread(buf, 1, len, (FILE*)handle);
 } /* }}} */
@@ -62,7 +62,7 @@ static void zend_stream_stdio_closer(void *handle TSRMLS_DC) /* {{{ */
 	}
 } /* }}} */
 
-static size_t zend_stream_stdio_fsizer(void *handle TSRMLS_DC) /* {{{ */
+static zend_string_size zend_stream_stdio_fsizer(void *handle TSRMLS_DC) /* {{{ */
 {
 	struct stat buf;
 	if (handle && fstat(fileno((FILE*)handle), &buf) == 0) {
@@ -104,7 +104,7 @@ static inline int zend_stream_is_mmap(zend_file_handle *file_handle) { /* {{{ */
 	return file_handle->type == ZEND_HANDLE_MAPPED;
 } /* }}} */
 
-static size_t zend_stream_fsize(zend_file_handle *file_handle TSRMLS_DC) /* {{{ */
+static zend_string_size zend_stream_fsize(zend_file_handle *file_handle TSRMLS_DC) /* {{{ */
 {
 	struct stat buf;
 
@@ -151,11 +151,11 @@ static int zend_stream_getc(zend_file_handle *file_handle TSRMLS_DC) /* {{{ */
 	return EOF;
 } /* }}} */
 
-static size_t zend_stream_read(zend_file_handle *file_handle, char *buf, size_t len TSRMLS_DC) /* {{{ */
+static zend_string_size zend_stream_read(zend_file_handle *file_handle, char *buf, zend_string_size len TSRMLS_DC) /* {{{ */
 {
 	if (!zend_stream_is_mmap(file_handle) && file_handle->handle.stream.isatty) {
 		int c = '*';
-		size_t n;
+		zend_string_size n;
 
 #ifdef NETWARE
 		/*
@@ -178,9 +178,9 @@ static size_t zend_stream_read(zend_file_handle *file_handle, char *buf, size_t 
 	return file_handle->handle.stream.reader(file_handle->handle.stream.handle, buf, len TSRMLS_CC);
 } /* }}} */
 
-ZEND_API int zend_stream_fixup(zend_file_handle *file_handle, char **buf, size_t *len TSRMLS_DC) /* {{{ */
+ZEND_API int zend_stream_fixup(zend_file_handle *file_handle, char **buf, zend_string_size *len TSRMLS_DC) /* {{{ */
 {
-	size_t size;
+	zend_string_size size;
 	zend_stream_type old_type;
 
 	if (file_handle->type == ZEND_HANDLE_FILENAME) {
@@ -220,7 +220,7 @@ ZEND_API int zend_stream_fixup(zend_file_handle *file_handle, char **buf, size_t
 	}
 
 	size = zend_stream_fsize(file_handle TSRMLS_CC);
-	if (size == (size_t)-1) {
+	if (size == (zend_string_size)-1) {
 		return FAILURE;
 	}
 
@@ -229,7 +229,7 @@ ZEND_API int zend_stream_fixup(zend_file_handle *file_handle, char **buf, size_t
 
 	if (old_type == ZEND_HANDLE_FP && !file_handle->handle.stream.isatty && size) {
 #if HAVE_MMAP
-		size_t page_size = REAL_PAGE_SIZE;
+		zend_string_size page_size = REAL_PAGE_SIZE;
 
 		if (file_handle->handle.fp &&
 		    size != 0 &&
@@ -255,7 +255,7 @@ ZEND_API int zend_stream_fixup(zend_file_handle *file_handle, char **buf, size_t
 		file_handle->handle.stream.mmap.buf = *buf = safe_emalloc(1, size, ZEND_MMAP_AHEAD);
 		file_handle->handle.stream.mmap.len = zend_stream_read(file_handle, *buf, size TSRMLS_CC);
 	} else {
-		size_t read, remain = 4*1024;
+		zend_string_size read, remain = 4*1024;
 		*buf = emalloc(remain);
 		size = 0;
 

@@ -2105,7 +2105,7 @@ ZEND_API int zend_binary_strcmp(const char *s1, zend_string_size len1, const cha
 }
 /* }}} */
 
-ZEND_API int zend_binary_strncmp(const char *s1, zend_string_size len1, const char *s2, uint len2, zend_string_size length) /* {{{ */
+ZEND_API int zend_binary_strncmp(const char *s1, zend_string_size len1, const char *s2, zend_string_size len2, zend_string_size length) /* {{{ */
 {
 	int retval;
 
