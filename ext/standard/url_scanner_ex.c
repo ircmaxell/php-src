@@ -1026,7 +1026,7 @@ static void php_url_scanner_output_handler(char *output, uint output_len, char *
 PHPAPI int php_url_scanner_add_var(char *name, int name_len, char *value, int value_len, int urlencode TSRMLS_DC)
 {
 	char *encoded;
-	int encoded_len;
+	zend_string_size encoded_len;
 	smart_str val;
 	
 	if (! BG(url_adapt_state_ex).active) {

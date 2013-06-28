@@ -541,19 +541,19 @@ struct _zend_class_entry {
 #include "zend_stream.h"
 typedef struct _zend_utility_functions {
 	void (*error_function)(int type, const char *error_filename, const uint error_lineno, const char *format, va_list args) ZEND_ATTRIBUTE_PTR_FORMAT(printf, 4, 0);
-	int (*printf_function)(const char *format, ...) ZEND_ATTRIBUTE_PTR_FORMAT(printf, 1, 2);
-	int (*write_function)(const char *str, uint str_length);
+	zend_string_size (*printf_function)(const char *format, ...) ZEND_ATTRIBUTE_PTR_FORMAT(printf, 1, 2);
+	zend_string_size (*write_function)(const char *str, zend_string_size str_length);
 	FILE *(*fopen_function)(const char *filename, char **opened_path TSRMLS_DC);
 	void (*message_handler)(long message, const void *data TSRMLS_DC);
 	void (*block_interruptions)(void);
 	void (*unblock_interruptions)(void);
-	int (*get_configuration_directive)(const char *name, uint name_length, zval *contents);
+	int (*get_configuration_directive)(const char *name, zend_string_size name_length, zval *contents);
 	void (*ticks_function)(int ticks);
 	void (*on_timeout)(int seconds TSRMLS_DC);
 	int (*stream_open_function)(const char *filename, zend_file_handle *handle TSRMLS_DC);
-	int (*vspprintf_function)(char **pbuf, size_t max_len, const char *format, va_list ap);
-	char *(*getenv_function)(char *name, size_t name_len TSRMLS_DC);
-	char *(*resolve_path_function)(const char *filename, int filename_len TSRMLS_DC);
+	zend_string_size (*vspprintf_function)(char **pbuf, zend_string_size max_len, const char *format, va_list ap);
+	char *(*getenv_function)(char *name, zend_string_size name_len TSRMLS_DC);
+	char *(*resolve_path_function)(const char *filename, zend_string_size filename_len TSRMLS_DC);
 } zend_utility_functions;
 
 typedef struct _zend_utility_values {

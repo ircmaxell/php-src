@@ -415,7 +415,7 @@ static int multipart_buffer_headers(multipart_buffer *self, zend_llist *header T
 		char *value = NULL;
 
 		if (php_rfc1867_encoding_translation(TSRMLS_C)) {
-			self->input_encoding = zend_multibyte_encoding_detector(line, strlen(line), self->detect_order, self->detect_order_size TSRMLS_CC);
+			self->input_encoding = zend_multibyte_encoding_detector((unsigned char*) line, strlen(line), self->detect_order, self->detect_order_size TSRMLS_CC);
 		}
 
 		/* space in the beginning means same header */
@@ -647,10 +647,10 @@ static int multipart_buffer_read(multipart_buffer *self, char *buf, int bytes, i
   XXX: this is horrible memory-usage-wise, but we only expect
   to do this on small pieces of form data.
 */
-static char *multipart_buffer_read_body(multipart_buffer *self, unsigned int *len TSRMLS_DC)
+static char *multipart_buffer_read_body(multipart_buffer *self, zend_string_size *len TSRMLS_DC)
 {
 	char buf[FILLUNIT], *out=NULL;
-	int total_bytes=0, read_bytes=0;
+	zend_string_size total_bytes=0, read_bytes=0;
 
 	while((read_bytes = multipart_buffer_read(self, buf, sizeof(buf), NULL TSRMLS_CC))) {
 		out = erealloc(out, total_bytes + read_bytes + 1);
@@ -843,9 +843,9 @@ SAPI_API SAPI_POST_HANDLER_FUNC(rfc1867_post_handler) /* {{{ */
 
 			/* Normal form variable, safe to read all data into memory */
 			if (!filename && param) {
-				unsigned int value_len;
+				zend_string_size value_len;
 				char *value = multipart_buffer_read_body(mbuff, &value_len TSRMLS_CC);
-				unsigned int new_val_len; /* Dummy variable */
+				zend_string_size new_val_len; /* Dummy variable */
 
 				if (!value) {
 					value = estrdup("");
@@ -854,8 +854,8 @@ SAPI_API SAPI_POST_HANDLER_FUNC(rfc1867_post_handler) /* {{{ */
 
 				if (mbuff->input_encoding && internal_encoding) {
 					unsigned char *new_value;
-					size_t new_value_len;
-					if ((size_t)-1 != zend_multibyte_encoding_converter(&new_value, &new_value_len, (unsigned char *)value, value_len, internal_encoding, mbuff->input_encoding TSRMLS_CC)) {
+					zend_string_size new_value_len;
+					if (-1 != zend_multibyte_encoding_converter(&new_value, &new_value_len, (unsigned char *)value, value_len, internal_encoding, mbuff->input_encoding TSRMLS_CC)) {
 						efree(value);
 						value = (char *)new_value;
 						value_len = new_value_len;

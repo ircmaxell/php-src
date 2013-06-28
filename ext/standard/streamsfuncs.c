@@ -542,7 +542,7 @@ PHP_FUNCTION(stream_get_transports)
 {
 	HashTable *stream_xport_hash;
 	char *stream_xport;
-	uint stream_xport_len;
+	zend_string_size stream_xport_len;
 	ulong num_key;
 
 	if (zend_parse_parameters_none() == FAILURE) {
@@ -572,7 +572,7 @@ PHP_FUNCTION(stream_get_wrappers)
 	HashTable *url_stream_wrappers_hash;
 	char *stream_protocol;
 	int key_flags;
-	uint stream_protocol_len = 0;
+	zend_string_size stream_protocol_len = 0;
 	ulong num_key;
 
 	if (zend_parse_parameters_none() == FAILURE) {
@@ -658,7 +658,7 @@ static int stream_array_from_fd_set(zval *stream_array, fd_set *fds TSRMLS_DC)
 
 		int type;
 		char *key;
-		uint key_len;
+		zend_string_size key_len;
 		ulong num_ind;
 		/* Temporary int fd is needed for the STREAM data type on windows, passing this_fd directly to php_stream_cast()
 			would eventually bring a wrong result on x64. php_stream_cast() casts to int internally, and this will leave
@@ -923,7 +923,7 @@ static int parse_context_options(php_stream_context *context, zval *options TSRM
 	HashPosition pos, opos;
 	zval **wval, **oval;
 	char *wkey, *okey;
-	uint wkey_len, okey_len;
+	zend_string_size wkey_len, okey_len;
 	int ret = SUCCESS;
 	ulong num_key;
 

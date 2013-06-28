@@ -35,7 +35,7 @@ PHPAPI void make_sha1_digest(char *sha1str, unsigned char *digest)
 PHP_FUNCTION(sha1)
 {
 	char *arg;
-	int arg_len;
+	zend_string_size arg_len;
 	zend_bool raw_output = 0;
 	char sha1str[41];
 	PHP_SHA1_CTX context;
@@ -47,10 +47,10 @@ PHP_FUNCTION(sha1)
 
 	sha1str[0] = '\0';
 	PHP_SHA1Init(&context);
-	PHP_SHA1Update(&context, arg, arg_len);
+	PHP_SHA1Update(&context, (unsigned char*) arg, arg_len);
 	PHP_SHA1Final(digest, &context);
 	if (raw_output) {
-		RETURN_STRINGL(digest, 20, 1);
+		RETURN_STRINGL((char*) digest, 20, 1);
 	} else {
 		make_digest_ex(sha1str, digest, 20);
 		RETVAL_STRING(sha1str, 1);
@@ -86,7 +86,7 @@ PHP_FUNCTION(sha1_file)
 
 	PHP_SHA1Init(&context);
 
-	while ((n = php_stream_read(stream, buf, sizeof(buf))) > 0) {
+	while ((n = php_stream_read(stream, (char*) buf, sizeof(buf))) > 0) {
 		PHP_SHA1Update(&context, buf, n);
 	}
 
@@ -99,7 +99,7 @@ PHP_FUNCTION(sha1_file)
 	}
 
 	if (raw_output) {
-		RETURN_STRINGL(digest, 20, 1);
+		RETURN_STRINGL((char*) digest, 20, 1);
 	} else {
 		make_digest_ex(sha1str, digest, 20);
 		RETVAL_STRING(sha1str, 1);

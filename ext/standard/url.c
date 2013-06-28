@@ -61,7 +61,7 @@ PHPAPI void php_url_free(php_url *theurl)
 
 /* {{{ php_replace_controlchars
  */
-PHPAPI char *php_replace_controlchars_ex(char *str, int len)
+PHPAPI char *php_replace_controlchars_ex(char *str, zend_string_size len)
 {
 	unsigned char *s = (unsigned char *)str;
 	unsigned char *e = (unsigned char *)str + len;
@@ -94,7 +94,7 @@ PHPAPI php_url *php_url_parse(char const *str)
 
 /* {{{ php_url_parse
  */
-PHPAPI php_url *php_url_parse_ex(char const *str, int length)
+PHPAPI php_url *php_url_parse_ex(char const *str, zend_string_size length)
 {
 	char port_buf[6];
 	php_url *ret = ecalloc(1, sizeof(php_url));
@@ -375,7 +375,7 @@ end:
 PHP_FUNCTION(parse_url)
 {
 	char *str;
-	int str_len;
+	zend_string_size str_len;
 	php_url *resource;
 	long key = -1;
 
@@ -485,7 +485,7 @@ static unsigned char hexchars[] = "0123456789ABCDEF";
 
 /* {{{ php_url_encode
  */
-PHPAPI char *php_url_encode(char const *s, int len, int *new_length)
+PHPAPI char *php_url_encode(char const *s, zend_string_size len, zend_string_size *new_length)
 {
 	register unsigned char c;
 	unsigned char *to, *start;
@@ -534,7 +534,7 @@ PHPAPI char *php_url_encode(char const *s, int len, int *new_length)
 PHP_FUNCTION(urlencode)
 {
 	char *in_str, *out_str;
-	int in_str_len, out_str_len;
+	zend_string_size in_str_len, out_str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
 							  &in_str_len) == FAILURE) {
@@ -551,7 +551,7 @@ PHP_FUNCTION(urlencode)
 PHP_FUNCTION(urldecode)
 {
 	char *in_str, *out_str;
-	int in_str_len, out_str_len;
+	zend_string_size in_str_len, out_str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
 							  &in_str_len) == FAILURE) {
@@ -567,7 +567,7 @@ PHP_FUNCTION(urldecode)
 
 /* {{{ php_url_decode
  */
-PHPAPI int php_url_decode(char *str, int len)
+PHPAPI zend_string_size php_url_decode(char *str, zend_string_size len)
 {
 	char *dest = str;
 	char *data = str;
@@ -598,7 +598,7 @@ PHPAPI int php_url_decode(char *str, int len)
 
 /* {{{ php_raw_url_encode
  */
-PHPAPI char *php_raw_url_encode(char const *s, int len, int *new_length)
+PHPAPI char *php_raw_url_encode(char const *s, zend_string_size len, zend_string_size *new_length)
 {
 	register int x, y;
 	unsigned char *str;
@@ -635,7 +635,7 @@ PHPAPI char *php_raw_url_encode(char const *s, int len, int *new_length)
 PHP_FUNCTION(rawurlencode)
 {
 	char *in_str, *out_str;
-	int in_str_len, out_str_len;
+	zend_string_size in_str_len, out_str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
 							  &in_str_len) == FAILURE) {
@@ -652,7 +652,7 @@ PHP_FUNCTION(rawurlencode)
 PHP_FUNCTION(rawurldecode)
 {
 	char *in_str, *out_str;
-	int in_str_len, out_str_len;
+	zend_string_size in_str_len, out_str_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
 							  &in_str_len) == FAILURE) {
@@ -668,7 +668,7 @@ PHP_FUNCTION(rawurldecode)
 
 /* {{{ php_raw_url_decode
  */
-PHPAPI int php_raw_url_decode(char *str, int len)
+PHPAPI zend_string_size php_raw_url_decode(char *str, zend_string_size len)
 {
 	char *dest = str;
 	char *data = str;
@@ -699,7 +699,7 @@ PHPAPI int php_raw_url_decode(char *str, int len)
 PHP_FUNCTION(get_headers)
 {
 	char *url;
-	int url_len;
+	zend_string_size url_len;
 	php_stream_context *context;
 	php_stream *stream;
 	zval **prev_val, **hdr = NULL, **h;
