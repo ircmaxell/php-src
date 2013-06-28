@@ -81,7 +81,9 @@ static php_process_env_t _php_array_to_envp(zval *environment, int is_persistent
 	char **ep;
 #endif
 	char *p;
-	uint string_length, cnt, l, sizeenv=0, el_len;
+	zend_string_size string_length;
+	int cnt, l;
+	zend_string_size sizeenv=0, el_len;
 	ulong num_key;
 	HashTable *target_hash;
 	HashPosition pos;

@@ -795,7 +795,7 @@ static HashTable* spl_array_get_debug_info(zval *obj, int *is_temp TSRMLS_DC) /*
 {
 	spl_array_object *intern = (spl_array_object*)zend_object_store_get_object(obj TSRMLS_CC);
 	zval *tmp, *storage;
-	int name_len;
+	zend_string_size name_len;
 	char *zname;
 	zend_class_entry *base;
 

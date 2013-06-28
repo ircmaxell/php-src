@@ -1462,7 +1462,7 @@ PHP_FUNCTION(rename)
 PHP_FUNCTION(unlink)
 {
 	char *filename;
-	int filename_len;
+	zend_string_size filename_len;
 	php_stream_wrapper *wrapper;
 	zval *zcontext = NULL;
 	php_stream_context *context = NULL;
@@ -2282,7 +2282,7 @@ out:
 PHP_FUNCTION(realpath)
 {
 	char *filename;
-	int filename_len;
+	zend_string_size filename_len;
 	char resolved_path_buff[MAXPATHLEN];
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &filename, &filename_len) == FAILURE) {
