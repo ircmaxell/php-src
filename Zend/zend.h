@@ -441,12 +441,12 @@ typedef struct _zend_unserialize_data zend_unserialize_data;
 
 struct _zend_trait_method_reference {
 	const char* method_name;
-	unsigned int mname_len;
+	zend_string_size mname_len;
 	
 	zend_class_entry *ce;
 	
 	const char* class_name;
-	unsigned int cname_len;
+	zend_string_size cname_len;
 };
 typedef struct _zend_trait_method_reference	zend_trait_method_reference;
 
@@ -464,7 +464,7 @@ struct _zend_trait_alias {
 	* name for method to be added
 	*/
 	const char* alias;
-	unsigned int alias_len;
+	zend_string_size alias_len;
 	
 	/**
 	* modifiers to be set on trait method
@@ -509,7 +509,7 @@ struct _zend_class_entry {
 	zend_object_value (*create_object)(zend_class_entry *class_type TSRMLS_DC);
 	zend_object_iterator *(*get_iterator)(zend_class_entry *ce, zval *object, int by_ref TSRMLS_DC);
 	int (*interface_gets_implemented)(zend_class_entry *iface, zend_class_entry *class_type TSRMLS_DC); /* a class implements this interface */
-	union _zend_function *(*get_static_method)(zend_class_entry *ce, char* method, int method_len TSRMLS_DC);
+	union _zend_function *(*get_static_method)(zend_class_entry *ce, char* method, zend_string_size method_len TSRMLS_DC);
 
 	/* serializer callbacks */
 	int (*serialize)(zval *object, unsigned char **buffer, zend_string_size *buf_len, zend_serialize_data *data TSRMLS_DC);

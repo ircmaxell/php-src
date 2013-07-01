@@ -667,7 +667,7 @@ PHP_FUNCTION(lchown)
 PHP_FUNCTION(chmod)
 {
 	char *filename;
-	int filename_len;
+	zend_string_size filename_len;
 	long mode;
 	int ret;
 	mode_t imode;

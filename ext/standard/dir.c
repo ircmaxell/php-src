@@ -323,7 +323,8 @@ PHP_FUNCTION(chroot)
 PHP_FUNCTION(chdir)
 {
 	char *str;
-	int ret, str_len;
+	int ret;
+	zend_string_size str_len;
 	
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p", &str, &str_len) == FAILURE) {
 		RETURN_FALSE;
@@ -429,7 +430,7 @@ PHP_FUNCTION(glob)
 	char *result;
 #endif
 	char *pattern = NULL;
-	int pattern_len;
+	zend_string_size pattern_len;
 	long flags = 0;
 	glob_t globbuf;
 	int n;
@@ -545,7 +546,7 @@ no_results:
 PHP_FUNCTION(scandir)
 {
 	char *dirn;
-	int dirn_len;
+	zend_string_size dirn_len;
 	long flags = 0;
 	char **namelist;
 	int n, i;
