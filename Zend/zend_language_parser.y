@@ -954,6 +954,24 @@ static_scalar: /* compile-time evaluated scalars */
 	|	'[' static_array_pair_list ']' { $$ = $2; Z_TYPE($$.u.constant) = IS_CONSTANT_ARRAY; }
 	|	static_class_constant { $$ = $1; }
 	|	T_CLASS_C			{ $$ = $1; }
+	| 	'(' static_scalar ')' { $$ = $2; }
+	|	static_operation { $$ = $1; }
+;
+
+static_operation:
+		static_scalar '+' static_scalar { add_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '-' static_scalar { sub_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	|	static_scalar '*' static_scalar { mul_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '/' static_scalar { div_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '%' static_scalar { mod_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	'!' static_scalar { boolean_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	| 	'~' static_scalar { bitwise_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	| 	static_scalar '|' static_scalar { bitwise_or_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '&' static_scalar { bitwise_and_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '^' static_scalar { bitwise_xor_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar T_SL static_scalar { shift_left_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar T_SR static_scalar { shift_right_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); $$ = $1; }
+	| 	static_scalar '.' static_scalar { concat_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
 ;
 
 static_class_constant:
