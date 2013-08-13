@@ -14,6 +14,11 @@ This is a test string
 ENDOFSTRING;
 const T_9 = ~-1;
 
+// Test order of operations
+const T_10 = 1 + 2 * 3;
+
+// Test for memory leaks
+const T_11 = "1" + 2 + "3";
 
 var_dump(T_1);
 var_dump(T_2);
@@ -24,6 +29,8 @@ var_dump(T_6);
 var_dump(T_7);
 var_dump(T_8);
 var_dump(T_9);
+var_dump(T_10);
+var_dump(T_11);
 ?>
 --EXPECT--
 int(2)
@@ -35,3 +42,5 @@ string(6) "foo234"
 int(8)
 string(21) "This is a test string"
 int(0)
+int(7)
+int(6)
