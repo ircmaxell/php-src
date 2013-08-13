@@ -943,35 +943,39 @@ common_scalar:
 
 
 static_scalar: /* compile-time evaluated scalars */
-		common_scalar		{ $$ = $1; }
+		static_scalar_value { $$ = $1; }
 	|	static_class_name_scalar	{ $$ = $1; }
 	|	namespace_name 		{ zend_do_fetch_constant(&$$, NULL, &$1, ZEND_CT, 1 TSRMLS_CC); }
 	|	T_NAMESPACE T_NS_SEPARATOR namespace_name { $$.op_type = IS_CONST; ZVAL_EMPTY_STRING(&$$.u.constant);  zend_do_build_namespace_name(&$$, &$$, &$3 TSRMLS_CC); $3 = $$; zend_do_fetch_constant(&$$, NULL, &$3, ZEND_CT, 0 TSRMLS_CC); }
 	|	T_NS_SEPARATOR namespace_name { char *tmp = estrndup(Z_STRVAL($2.u.constant), Z_STRLEN($2.u.constant)+1); memcpy(&(tmp[1]), Z_STRVAL($2.u.constant), Z_STRLEN($2.u.constant)+1); tmp[0] = '\\'; efree(Z_STRVAL($2.u.constant)); Z_STRVAL($2.u.constant) = tmp; ++Z_STRLEN($2.u.constant); zend_do_fetch_constant(&$$, NULL, &$2, ZEND_CT, 0 TSRMLS_CC); }
-	|	'+' static_scalar { ZVAL_LONG(&$1.u.constant, 0); add_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
-	|	'-' static_scalar { ZVAL_LONG(&$1.u.constant, 0); sub_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
 	|	T_ARRAY '(' static_array_pair_list ')' { $$ = $3; Z_TYPE($$.u.constant) = IS_CONSTANT_ARRAY; }
 	|	'[' static_array_pair_list ']' { $$ = $2; Z_TYPE($$.u.constant) = IS_CONSTANT_ARRAY; }
 	|	static_class_constant { $$ = $1; }
 	|	T_CLASS_C			{ $$ = $1; }
-	| 	'(' static_scalar ')' { $$ = $2; }
+;
+
+static_scalar_value:
+		common_scalar		{ $$ = $1; }
+	|	'+' static_scalar_value { ZVAL_LONG(&$1.u.constant, 0); add_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	|	'-' static_scalar_value { ZVAL_LONG(&$1.u.constant, 0); sub_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	| 	'(' static_scalar_value ')' { $$ = $2; }
 	|	static_operation { $$ = $1; }
 ;
 
 static_operation:
-		static_scalar '+' static_scalar { add_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '-' static_scalar { sub_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	|	static_scalar '*' static_scalar { mul_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '/' static_scalar { div_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '%' static_scalar { mod_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	'!' static_scalar { boolean_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
-	| 	'~' static_scalar { bitwise_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
-	| 	static_scalar '|' static_scalar { bitwise_or_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '&' static_scalar { bitwise_and_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '^' static_scalar { bitwise_xor_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar T_SL static_scalar { shift_left_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar T_SR static_scalar { shift_right_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
-	| 	static_scalar '.' static_scalar { concat_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+		static_scalar_value '+' static_scalar_value { add_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '-' static_scalar_value { sub_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	|	static_scalar_value '*' static_scalar_value { mul_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '/' static_scalar_value { div_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '%' static_scalar_value { mod_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	'!' static_scalar_value { boolean_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	| 	'~' static_scalar_value { bitwise_not_function(&$2.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; }
+	| 	static_scalar_value '|' static_scalar_value { bitwise_or_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '&' static_scalar_value { bitwise_and_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '^' static_scalar_value { bitwise_xor_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value T_SL static_scalar_value { shift_left_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value T_SR static_scalar_value { shift_right_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
+	| 	static_scalar_value '.' static_scalar_value { concat_function(&$1.u.constant, &$1.u.constant, &$3.u.constant TSRMLS_CC); zval_dtor(&$3.u.constant); $$ = $1; }
 ;
 
 static_class_constant:
