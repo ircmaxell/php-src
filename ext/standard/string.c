@@ -4064,8 +4064,8 @@ static void php_hebrev(INTERNAL_FUNCTION_PARAMETERS, int convert_newlines)
 				block_end++;
 				block_length++;
 			}
-			for (i = block_start; i<= block_end; i++) {
-				*target = str[i];
+			for (i = block_start+1; i<= block_end+1; i++) {
+				*target = str[i-1];
 				switch (*target) {
 					case '(':
 						*target = ')';
@@ -4113,8 +4113,8 @@ static void php_hebrev(INTERNAL_FUNCTION_PARAMETERS, int convert_newlines)
 				tmp--;
 				block_end--;
 			}
-			for (i = block_end; i >= block_start; i--) {
-				*target = str[i];
+			for (i = block_end+1; i >= block_start+1; i--) {
+				*target = str[i-1];
 				target--;
 			}
 			block_type = _HEB_BLOCK_TYPE_HEB;
@@ -4129,7 +4129,7 @@ static void php_hebrev(INTERNAL_FUNCTION_PARAMETERS, int convert_newlines)
 
 	while (1) {
 		char_count=0;
-		while ((!max_chars || char_count < max_chars) && begin > 0) {
+		while ((!max_chars || max_chars > 0 && char_count < max_chars) && begin > 0) {
 			char_count++;
 			begin--;
 			if (begin <= 0 || _isnewline(heb_str[begin])) {
@@ -4140,7 +4140,7 @@ static void php_hebrev(INTERNAL_FUNCTION_PARAMETERS, int convert_newlines)
 				break;
 			}
 		}
-		if (char_count == max_chars) { /* try to avoid breaking words */
+		if (max_chars >= 0 && char_count == max_chars) { /* try to avoid breaking words */
 			zend_str_size_int new_char_count=char_count, new_begin=begin;
 
 			while (new_char_count > 0) {
@@ -5221,7 +5221,7 @@ PHP_FUNCTION(str_pad)
 
 	/* If resulting string turns out to be shorter than input string,
 	   we simply copy the input and return. */
-	if (pad_length <= 0 || (pad_length - input_len) <= 0) {
+	if (pad_length < 0 || pad_length <= input_len) {
 		RETURN_STRINGL(input, input_len, 1);
 	}
 
@@ -5514,19 +5514,21 @@ PHP_FUNCTION(str_split)
 		RETURN_FALSE;
 	}
 
-	array_init_size(return_value, ((str_len - 1) / split_length) + 1);
-
-	if (split_length >= str_len) {
+	if (0 == str_len || split_length >= str_len) {
+		array_init_size(return_value, 1);
 		add_next_index_stringl(return_value, str, str_len, 1);
 		return;
 	}
 
+	array_init_size(return_value, ((str_len - 1) / split_length) + 1);
+
 	n_reg_segments = str_len / split_length;
 	p = str;
 
-	while (n_reg_segments-- > 0) {
+	while (n_reg_segments > 0) {
 		add_next_index_stringl(return_value, p, split_length, 1);
 		p += split_length;
+		n_reg_segments--;
 	}
 
 	if (p != (str + str_len)) {
