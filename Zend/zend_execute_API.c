@@ -1127,7 +1127,7 @@ ZEND_API int zend_lookup_class_ex(const char *name, int name_length, const zend_
 		zend_hash_quick_find(EG(class_table), lc_name, lc_length, hash, (void **) ce) == SUCCESS) {
 		retval = SUCCESS;
 	}
-
+	zval_ptr_dtor(&class_name_ptr);
 	if (!key) {
 		free_alloca(lc_free, use_heap);
 	}

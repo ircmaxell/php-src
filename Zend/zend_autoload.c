@@ -111,6 +111,7 @@ int zend_autoload_call(const zval* name, long type TSRMLS_DC)
 		}
 		zend_hash_move_forward_ex(EG(autoload_funcs), &function_pos);
 	}
+	zend_fcall_info_args_clear(&func_info->fci, 1);
 	zend_exception_restore(TSRMLS_C);
 
 	zval_ptr_dtor(&ztype);
