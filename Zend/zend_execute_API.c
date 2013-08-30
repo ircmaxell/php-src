@@ -1022,11 +1022,12 @@ ZEND_API int zend_lookup_function(const char *name, int name_length, zend_functi
 
 ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const zend_literal *key, int use_autoload, zend_function **fbc TSRMLS_DC)
 {
-	char *lc_name, *lc_free;
-	int lc_length, retval = FAILURE;
+	char *lc_name;
+	int lc_length;
+	int retval = FAILURE;
 	zend_ulong hash;
-	ALLOCA_FLAG(use_heap)
 	zval *function_name_ptr;
+
 
 	if (key) {
 		lc_name = Z_STRVAL(key->constant);
@@ -1036,22 +1037,12 @@ ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const ze
 		if (name == NULL || !name_length) {
 			return FAILURE;
 		}
-
-		lc_free = lc_name = do_alloca(name_length + 1, use_heap);
-		zend_str_tolower_copy(lc_name, name, name_length);
-		lc_length = name_length + 1;
-
-		if (lc_name[0] == '\\') {
-			lc_name += 1;
-			lc_length -= 1;
-		}
-
+		lc_name = name;
+		lc_length = name_length;
 		hash = zend_inline_hash_func(lc_name, lc_length);
 	}
 	if (zend_hash_quick_find(EG(function_table), lc_name, lc_length, hash, (void **) fbc) == SUCCESS) {
-		if (!key) {
-			free_alloca(lc_free, use_heap);
-		}
+
 		return SUCCESS;
 	}
 
@@ -1059,9 +1050,6 @@ ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const ze
 	 * (doesn't impact functionality of __autoload_function()
 	*/
 	if (!use_autoload || zend_is_compiling(TSRMLS_C)) {
-		if (!key) {
-			free_alloca(lc_free, use_heap);
-		}
 		return FAILURE;
 	}
 
@@ -1077,9 +1065,6 @@ ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const ze
 	}
 	zval_ptr_dtor(&function_name_ptr);
 
-	if (!key) {
-		free_alloca(lc_free, use_heap);
-	}
 	return retval;
 
 }
