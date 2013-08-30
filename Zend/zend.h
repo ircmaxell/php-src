@@ -596,6 +596,7 @@ typedef int (*zend_write_func_t)(const char *str, uint str_length);
 #define IS_LEXICAL_VAR				0x020
 #define IS_LEXICAL_REF				0x040
 #define IS_CONSTANT_IN_NAMESPACE	0x100
+#define IS_CONSTANT_IN_AUTOLOAD		0x200
 
 /* overloaded elements data types */
 #define OE_IS_ARRAY		(1<<0)

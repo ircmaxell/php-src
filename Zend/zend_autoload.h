@@ -30,11 +30,11 @@ typedef struct {
    long type;
 } zend_autoload_func;
 
-int zend_autoload_call(zval* name, long type TSRMLS_DC);
+int zend_autoload_call(const zval* name, long type TSRMLS_DC);
 int zend_autoload_register(zend_autoload_func* func, zend_bool prepend TSRMLS_DC);
 int zend_autoload_unregister(zval *callable TSRMLS_DC);
 
 #define ZEND_AUTOLOAD_CLASS    1
 #define ZEND_AUTOLOAD_FUNCTION 2
-
-
+#define ZEND_AUTOLOAD_CONSTANT 4
+#define ZEND_AUTOLOAD_ALL      (~0)

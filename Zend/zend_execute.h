@@ -66,6 +66,9 @@ ZEND_API int zend_lookup_class_ex(const char *name, int name_length, const zend_
 ZEND_API int zend_lookup_function(const char *name, int name_length, zend_function **fbc TSRMLS_DC);
 ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const zend_literal *key, int use_autoload, zend_function **fbc TSRMLS_DC);
 
+#define ZEND_LOOKUP_FUNCTION_BY_NAME(name, name_length, fbc) (zend_hash_find(EG(function_table), (name), (name_length) + 1, (void**) (fbc)) == SUCCESS || zend_lookup_function((name), (name_length), (fbc)) == SUCCESS)
+#define ZEND_LOOKUP_FUNCTION_BY_LITERAL(name, name_length, literal, fbc) (zend_hash_quick_find(EG(function_table), (name), (name_length) + 1, Z_HASH_P(literal), (void**) (fbc)) == SUCCESS || zend_lookup_function_ex((name), (name_length), (zend_literal*) (literal), 1, (fbc)) == SUCCESS)
+
 ZEND_API int zend_eval_string(char *str, zval *retval_ptr, char *string_name TSRMLS_DC);
 ZEND_API int zend_eval_stringl(char *str, int str_len, zval *retval_ptr, char *string_name TSRMLS_DC);
 ZEND_API int zend_eval_string_ex(char *str, zval *retval_ptr, char *string_name, int handle_exceptions TSRMLS_DC);

@@ -129,6 +129,10 @@ void zend_register_standard_constants(TSRMLS_D)
 
 	REGISTER_MAIN_LONG_CONSTANT(ZEND_NS_NAME("php", "AUTOLOAD_CLASS"), ZEND_AUTOLOAD_CLASS, CONST_CS | CONST_PERSISTENT);
 	REGISTER_MAIN_LONG_CONSTANT(ZEND_NS_NAME("php", "AUTOLOAD_FUNCTION"), ZEND_AUTOLOAD_FUNCTION, CONST_CS | CONST_PERSISTENT);
+	REGISTER_MAIN_LONG_CONSTANT(ZEND_NS_NAME("php", "AUTOLOAD_CONSTANT"), ZEND_AUTOLOAD_CONSTANT, CONST_CS | CONST_PERSISTENT);
+	REGISTER_MAIN_LONG_CONSTANT(ZEND_NS_NAME("php", "AUTOLOAD_ALL"), ZEND_AUTOLOAD_ALL, CONST_CS | CONST_PERSISTENT);
+
+
 }
 
 
@@ -458,6 +462,9 @@ zend_constant *zend_quick_get_constant(const zend_literal *key, ulong flags TSRM
 
 						key--;
 						if (!zend_get_special_constant(Z_STRVAL(key->constant), Z_STRLEN(key->constant), &c TSRMLS_CC)) {
+							if (!(flags & IS_CONSTANT_IN_AUTOLOAD) && zend_autoload_call(&key->constant, ZEND_AUTOLOAD_CONSTANT TSRMLS_CC) == SUCCESS) {
+								return zend_quick_get_constant(key, flags | IS_CONSTANT_IN_AUTOLOAD TSRMLS_CC);
+							}
 							return NULL;
 						}
 					}
@@ -465,6 +472,9 @@ zend_constant *zend_quick_get_constant(const zend_literal *key, ulong flags TSRM
 			} else {
 				key--;
 				if (!zend_get_special_constant(Z_STRVAL(key->constant), Z_STRLEN(key->constant), &c TSRMLS_CC)) {
+					if (!(flags & IS_CONSTANT_IN_AUTOLOAD) && zend_autoload_call(&key->constant, ZEND_AUTOLOAD_CONSTANT TSRMLS_CC) == SUCCESS) {
+						return zend_quick_get_constant(key, flags | IS_CONSTANT_IN_AUTOLOAD TSRMLS_CC);
+					}
 					return NULL;
 				}
 			}

@@ -31,7 +31,7 @@
 
 static char* zend_autoload_get_name_key(zend_fcall_info *fci, int *length, zend_bool *do_free TSRMLS_DC);
 
-int zend_autoload_call(zval* name, long type TSRMLS_DC)
+int zend_autoload_call(const zval* name, long type TSRMLS_DC)
 {
 	zval *ztype, *retval = NULL;
 	char *lc_name;
@@ -51,6 +51,9 @@ int zend_autoload_call(zval* name, long type TSRMLS_DC)
 			break;
 		case ZEND_AUTOLOAD_FUNCTION:
 			symbol_table = EG(function_table);
+			break;
+		case ZEND_AUTOLOAD_CONSTANT:
+			symbol_table = EG(zend_constants);
 			break;
 		default:
 			return FAILURE;
@@ -226,7 +229,7 @@ ZEND_FUNCTION(autoload_register)
 	Z_ADDREF_P(callable);
 
 	if (!type) {
-		func->type = ZEND_AUTOLOAD_FUNCTION | ZEND_AUTOLOAD_CLASS;
+		func->type = ZEND_AUTOLOAD_ALL;
 	} else {
 		func->type = type;
 	}

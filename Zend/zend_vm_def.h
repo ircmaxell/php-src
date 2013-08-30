@@ -2637,7 +2637,7 @@ ZEND_VM_HANDLER(59, ZEND_INIT_FCALL_BY_NAME, ANY, CONST|TMP|VAR|CV)
 		function_name = (zval*)(opline->op2.literal+1);
 		if (CACHED_PTR(opline->op2.literal->cache_slot)) {
 			call->fbc = CACHED_PTR(opline->op2.literal->cache_slot);
-		} else if (UNEXPECTED(zend_lookup_function_ex(Z_STRVAL_P(function_name), Z_STRLEN_P(function_name), (zend_literal*) function_name, 1, &call->fbc) == FAILURE)) {
+		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL_P(function_name), Z_STRLEN_P(function_name), function_name, &call->fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(opline->op2.zv));
 		} else {
@@ -2666,7 +2666,7 @@ ZEND_VM_HANDLER(59, ZEND_INIT_FCALL_BY_NAME, ANY, CONST|TMP|VAR|CV)
 			} else {
 				lcname = zend_str_tolower_dup(function_name_strval, function_name_strlen);
 			}
-			if (UNEXPECTED(zend_lookup_function(lcname, function_name_strlen, &call->fbc) == FAILURE)) {
+			if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_NAME(lcname, function_name_strlen, &call->fbc))) {
 				zend_error_noreturn(E_ERROR, "Call to undefined function %s()", function_name_strval);
 			}
 			efree(lcname);
@@ -2783,9 +2783,9 @@ ZEND_VM_HANDLER(69, ZEND_INIT_NS_FCALL_BY_NAME, ANY, CONST)
 	func_name = opline->op2.literal + 1;
 	if (CACHED_PTR(opline->op2.literal->cache_slot)) {
 		call->fbc = CACHED_PTR(opline->op2.literal->cache_slot);
-	} else if (zend_lookup_function_ex(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, 1, &call->fbc)==FAILURE) {
+	} else if (!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, &call->fbc)) {
 		func_name++;
-		if (UNEXPECTED(zend_lookup_function_ex(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, 1, &call->fbc)==FAILURE)) {
+		if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, &call->fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(opline->op2.zv));
 		} else {
@@ -2817,7 +2817,7 @@ ZEND_VM_HANDLER(60, ZEND_DO_FCALL, CONST, ANY)
 
 	if (CACHED_PTR(opline->op1.literal->cache_slot)) {
 		EX(function_state).function = CACHED_PTR(opline->op1.literal->cache_slot);
-	} else if (UNEXPECTED(zend_lookup_function_ex(Z_STRVAL_P(fname), Z_STRLEN_P(fname), (zend_literal*) fname, 1, &EX(function_state).function)==FAILURE)) {
+	} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL_P(fname), Z_STRLEN_P(fname), fname, &EX(function_state).function))) {
 	    SAVE_OPLINE();
 		zend_error_noreturn(E_ERROR, "Call to undefined function %s()", fname->value.str.val);
 	} else {
