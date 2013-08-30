@@ -489,11 +489,12 @@ PHP_FUNCTION(spl_autoload_register)
 
 	if (zend_autoload_register(func, prepend TSRMLS_CC) == FAILURE) {
 		if (ZEND_NUM_ARGS()) {
-			Z_DELREF_P(func->callable);
+			zval_ptr_dtor(&func->callable);
 		}
 		efree(func);
 		RETURN_FALSE;
 	}
+	efree(func);
 	RETURN_TRUE;
 } /* }}} */
 

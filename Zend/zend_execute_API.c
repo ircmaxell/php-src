@@ -1065,8 +1065,7 @@ ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const ze
 		return FAILURE;
 	}
 
-	ALLOC_ZVAL(function_name_ptr);
-	INIT_PZVAL(function_name_ptr);
+	ALLOC_INIT_ZVAL(function_name_ptr);
 	if (name[0] == '\\') {
 		ZVAL_STRINGL(function_name_ptr, name+1, name_length-1, 1);
 	} else {
@@ -1076,6 +1075,7 @@ ZEND_API int zend_lookup_function_ex(const char *name, int name_length, const ze
 		zend_hash_quick_find(EG(function_table), lc_name, lc_length, hash, (void **) fbc) == SUCCESS) {
 		retval = SUCCESS;
 	}
+	zval_ptr_dtor(&function_name_ptr);
 
 	if (!key) {
 		free_alloca(lc_free, use_heap);

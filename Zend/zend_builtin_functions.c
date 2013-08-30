@@ -1380,7 +1380,7 @@ ZEND_FUNCTION(function_exists)
 		name_len--;
 	}
 
-	retval = (zend_lookup_function_ex(name, name_len+1, NULL, (int) autoload, &func) == SUCCESS);
+	retval = (zend_lookup_function_ex(name, name_len, NULL, (int) autoload, &func) == SUCCESS);
 	
 	efree(lcname);
 

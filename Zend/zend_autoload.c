@@ -30,6 +30,7 @@
 #include "zend_exceptions.h"
 
 static char* zend_autoload_get_name_key(zend_fcall_info *fci, int *length, zend_bool *do_free TSRMLS_DC);
+static void zend_autoload_func_dtor(zend_autoload_func *func);
 
 int zend_autoload_call(const zval* name, long type TSRMLS_DC)
 {
@@ -112,7 +113,7 @@ int zend_autoload_call(const zval* name, long type TSRMLS_DC)
 	}
 	zend_exception_restore(TSRMLS_C);
 
-	Z_DELREF_P(ztype);
+	zval_ptr_dtor(&ztype);
 	zend_hash_del(EG(autoload_stack), lc_name, lc_length);
 	efree(lc_name);
 	return SUCCESS;
@@ -146,6 +147,12 @@ static char* zend_autoload_get_name_key(zend_fcall_info *fci, int *length, zend_
 	}
 }
 
+static void zend_autoload_func_dtor(zend_autoload_func *func) {
+	if (func->callable) {
+		zval_ptr_dtor(&func->callable);
+	}
+}
+
 int zend_autoload_register(zend_autoload_func *func, zend_bool prepend TSRMLS_DC)
 {
 	char *lc_name;
@@ -155,17 +162,14 @@ int zend_autoload_register(zend_autoload_func *func, zend_bool prepend TSRMLS_DC
 	lc_name = zend_autoload_get_name_key(&func->fci, &lc_length, &do_free);
 	if (lc_name == 0) {
 		zend_error_noreturn(E_ERROR, "Unknown Function Name Type Provided");
-	} else if (do_free) {
-		Z_ADDREF_P(func->callable);
 	}
 
 	if (!EG(autoload_funcs)) {
 		ALLOC_HASHTABLE(EG(autoload_funcs));
-		zend_hash_init(EG(autoload_funcs), 0, NULL, NULL, 0);
+		zend_hash_init(EG(autoload_funcs), 1, NULL, (dtor_func_t) zend_autoload_func_dtor, 0);
 	} else if (zend_hash_exists(EG(autoload_funcs), lc_name, lc_length + 1)) {
 		if (do_free) {
 			efree(lc_name);
-			Z_DELREF_P(func->callable);
 		}
 		return FAILURE;
 	}
@@ -177,7 +181,6 @@ int zend_autoload_register(zend_autoload_func *func, zend_bool prepend TSRMLS_DC
 	}
 	if (do_free) {
 		efree(lc_name);
-		Z_DELREF_P(func->callable);
 	}
 	return status;
 }
@@ -235,9 +238,9 @@ ZEND_FUNCTION(autoload_register)
 	}
 
 	if (zend_autoload_register(func, prepend TSRMLS_CC) == FAILURE) {
-		Z_DELREF_P(callable);
-		efree(func);
+		zval_ptr_dtor(&callable);
 	}
+	efree(func);
 }
 
 ZEND_FUNCTION(autoload_unregister)

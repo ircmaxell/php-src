@@ -2783,9 +2783,9 @@ ZEND_VM_HANDLER(69, ZEND_INIT_NS_FCALL_BY_NAME, ANY, CONST)
 	func_name = opline->op2.literal + 1;
 	if (CACHED_PTR(opline->op2.literal->cache_slot)) {
 		call->fbc = CACHED_PTR(opline->op2.literal->cache_slot);
-	} else if (!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, &call->fbc)) {
+	} else if (UNEXPECTED(zend_hash_quick_find(EG(function_table), Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant) + 1, func_name->hash_value, (void**) &call->fbc) == FAILURE)) {
 		func_name++;
-		if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name->hash_value, &call->fbc))) {
+		if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_LITERAL(Z_STRVAL(func_name->constant), Z_STRLEN(func_name->constant), func_name, &call->fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(opline->op2.zv));
 		} else {
