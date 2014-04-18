@@ -18,7 +18,7 @@ protected:
 	zend_llist test;
 };
 
-TEST_F(zend_llist_test, normalBehaviourTest) {
+TEST_F(zend_llist_test, basic) {
 	int head = 1;
 	int tail = 2;
 	int *ptr = NULL;
