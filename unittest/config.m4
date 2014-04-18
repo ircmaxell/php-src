@@ -18,11 +18,10 @@ if test -r "$PHP_GTEST/include/gtest/gtest.h"; then
 
   UNITTEST_PATH=unittest/alltests
 
-  BUILD_UNITTEST="\$(LIBTOOL) --mode=link \$(CC) -export-dynamic \$(CFLAGS_CLEAN) \$(EXTRA_CFLAGS) \$(EXTRA_LDFLAGS_PROGRAM) \$(LDFLAGS) \$(PHP_RPATHS) \$(PHP_GLOBAL_OBJS) \$(PHP_BINARY_OBJS) \$(EXTRA_LIBS) \$(ZEND_EXTRA_LIBS) \$(PHP_UNITTEST_OBJS) -o \$(SAPI_UNITTEST_PATH)"
+  BUILD_UNITTEST="\$(LIBTOOL) --mode=link \$(CC) -export-dynamic \$(CFLAGS_CLEAN) \$(EXTRA_CFLAGS) \$(EXTRA_LDFLAGS_PROGRAM) \$(LDFLAGS) \$(PHP_RPATHS) \$(PHP_GLOBAL_OBJS) \$(PHP_BINARY_OBJS) \$(EXTRA_LIBS) \$(ZEND_EXTRA_LIBS) \$(PHP_UNITTEST_OBJS) \$GTEST_DIR/include/gtest/gtest_main.cc -o \$(UNITTEST_PATH)"
 
   PHP_SUBST(UNITTEST_PATH)
   PHP_SUBST(BUILD_UNITTEST)
-  PHP_INSTALL_HEADERS([unittest/unittest.h])
 else
   AC_MSG_ERROR([Cannot find GTest header files under $PHP_GTEST.])
 fi
