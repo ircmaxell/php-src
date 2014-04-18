@@ -15,3 +15,9 @@ TEST(zend_string_to_double, basicOperation) {
 	EXPECT_EQ(1.5, zend_string_to_double("1.5", 3));
 	EXPECT_EQ(1.5, zend_string_to_double("1.5fed", 6));
 }
+
+TEST(zend_str_to_lower_copy, basicOperation) {
+	char *result = (char*) malloc(5 * sizeof(char));
+	zend_str_tolower_copy(result, "TEST", 4);
+	ASSERT_STREQ("test", result);
+}
