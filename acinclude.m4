@@ -745,6 +745,11 @@ AC_DEFUN([PHP_ADD_UNITTESTS], [
   PHP_ADD_SOURCES_X(PHP_EXT_DIR($1), $2, $ac_extra, PHP_UNITTEST_OBJS)
 ])
 
+AC_DEFUN([ZEND_ADD_UNITTESTS], [
+  PHP_ADD_SOURCES_X(Zend, $1, $ac_extra, PHP_UNITTEST_OBJS)
+])
+
+
 dnl -------------------------------------------------------------------------
 dnl Build macros
 dnl -------------------------------------------------------------------------
@@ -756,6 +761,23 @@ AC_DEFUN([PHP_BUILD_THREAD_SAFE],[
   enable_maintainer_zts=yes
   if test "$pthreads_working" != "yes"; then
     AC_MSG_ERROR([ZTS currently requires working POSIX threads. We were unable to verify that your system supports Pthreads.])
+  fi
+])
+
+dnl
+dnl PHP_REQUIRE_AR
+dnl
+AC_DEFUN([PHP_REQUIRE_AR],[
+  if test -z "$php_ar_done"; then
+    AN_MAKEVAR([AR], [AC_PROG_AR])
+    AN_PROGRAM([ar], [AC_PROG_AR])
+    AC_CHECK_TOOL([AR], [ar], :)
+    if test "$AR" != ":"; then
+      PHP_SUBST(AR)
+    else
+      AC_MSG_ERROR([Could not find suitable AR tool])
+    fi
+    php_ar_done=yes
   fi
 ])
 
