@@ -741,6 +741,10 @@ AC_ARG_ENABLE($1,[$3],$5=[$]enableval,
 PHP_ARG_ANALYZE($5,[$2],$6)
 ])
 
+AC_DEFUN([PHP_NEW_GTEST], [
+  PHP_ADD_SOURCES_X(PHP_EXT_DIR($1), $2, $ac_extra, PHP_UNITTEST_OBJS))
+])
+
 dnl -------------------------------------------------------------------------
 dnl Build macros
 dnl -------------------------------------------------------------------------
