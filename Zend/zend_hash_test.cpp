@@ -3,7 +3,21 @@
 #include "zend_hash.h"
 #include "gtest/gtest.h"
 
-TEST(zend_inline_hash_func, normalBehaviorTest) {
+class zend_hash_test : public testing::Test {
+public:
+	zend_hash_test() {
+		zend_hash_init(&test, 8, NULL, NULL, 1);
+	}
+	
+	~zend_hash_test() {
+		zend_hash_destroy(&test);
+	}
+
+protected:
+	HashTable test;
+};
+
+TEST(zend_hash_test, supporting) {
 	EXPECT_EQ(zend_inline_hash_func("l", 1), zend_inline_hash_func("l", 1));
 	EXPECT_EQ(zend_inline_hash_func("lo", 2), zend_inline_hash_func("lo", 2));
 	EXPECT_EQ(zend_inline_hash_func("lon", 3), zend_inline_hash_func("lon", 3));
@@ -21,4 +35,8 @@ TEST(zend_inline_hash_func, normalBehaviorTest) {
 	EXPECT_EQ(zend_inline_hash_func("longertestingth", 15), zend_inline_hash_func("longertestingth", 15));
 	EXPECT_EQ(zend_inline_hash_func("longertestingthi", 16), zend_inline_hash_func("longertestingthi", 16));
 	EXPECT_EQ(zend_inline_hash_func("longertestingthis", 17), zend_inline_hash_func("longertestingthis", 17));
+}
+
+TEST(zend_hash_test, basic) {
+	
 }
