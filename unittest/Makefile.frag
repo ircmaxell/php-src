@@ -22,8 +22,8 @@ unittest/gtest_main.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
             $(GTEST_DIR)/src/gtest_main.cc
 
-unittest/gtest.a : gtest-all.o
+unittest/gtest.a : unittest/gtest-all.o
 	$(AR) $(ARFLAGS) $@ $^
 
-unittest/gtest_main.a : gtest-all.o gtest_main.o
+unittest/gtest_main.a : unittest/gtest-all.o unittest/gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
