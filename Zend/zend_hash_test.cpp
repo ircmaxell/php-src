@@ -17,7 +17,7 @@ protected:
 	HashTable test;
 };
 
-TEST(zend_hash_test, supporting) {
+TEST_F(zend_hash_test, supporting) {
 	EXPECT_EQ(zend_inline_hash_func("l", 1), zend_inline_hash_func("l", 1));
 	EXPECT_EQ(zend_inline_hash_func("lo", 2), zend_inline_hash_func("lo", 2));
 	EXPECT_EQ(zend_inline_hash_func("lon", 3), zend_inline_hash_func("lon", 3));
@@ -37,6 +37,14 @@ TEST(zend_hash_test, supporting) {
 	EXPECT_EQ(zend_inline_hash_func("longertestingthis", 17), zend_inline_hash_func("longertestingthis", 17));
 }
 
-TEST(zend_hash_test, basic) {
+TEST_F(zend_hash_test, basic) {
+	int dummy = 1;
+	int *ptr = NULL;
 	
+	EXPECT_EQ(zend_hash_next_index_insert(&test, (void**) &dummy, sizeof(int), NULL), SUCCESS);
+	EXPECT_EQ(zend_hash_num_elements(&test), 1);
+	EXPECT_EQ(zend_hash_index_find(&test, 0, (void**) &ptr), SUCCESS);
+	EXPECT_EQ(*ptr, 1);	
+	zend_hash_clean(&test);
+	EXPECT_EQ(zend_hash_num_elements(&test), 0);
 }
