@@ -1,8 +1,9 @@
 #include "zend.h"
 #include "zend_API.h"
 #include "zend_hash.h"
-#include "zend_llist.h"
 #include "gtest/gtest.h"
+
+#include "zend_llist.h"
 
 class zend_llist_test : public testing::Test {
 public:
@@ -24,18 +25,18 @@ TEST_F(zend_llist_test, basic) {
 	int *ptr = NULL;
 	
 	zend_llist_add_element(&test, static_cast<void*>(&tail));
-	EXPECT_EQ(zend_llist_count(&test), 1);
+	EXPECT_EQ(1, zend_llist_count(&test));
 	
 	zend_llist_prepend_element(&test, static_cast<void *>(&head));
-	EXPECT_EQ(zend_llist_count(&test), 2);
+	EXPECT_EQ(2, zend_llist_count(&test));
 	
 	ptr = static_cast<int*>(zend_llist_get_first(&test));
-	EXPECT_EQ(*ptr, 1);
+	EXPECT_EQ(1, *ptr);
 	
 	ptr = static_cast<int*>(zend_llist_get_last(&test));
-	EXPECT_EQ(*ptr, 2);
+	EXPECT_EQ(2, *ptr);
 	
 	zend_llist_clean(&test);
-	EXPECT_EQ(zend_llist_count(&test), 0);
+	EXPECT_EQ(0, zend_llist_count(&test));
 }
 
