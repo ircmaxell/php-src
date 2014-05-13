@@ -4973,22 +4973,25 @@ void zend_do_early_binding(TSRMLS_D) /* {{{ */
 				zend_class_entry **pce;
 
 				parent_name = &CONSTANT(fetch_class_opline->op2.constant);
-				if ((zend_lookup_class(Z_STRVAL_P(parent_name), Z_STRLEN_P(parent_name), &pce TSRMLS_CC) == FAILURE) ||
-				    ((CG(compiler_options) & ZEND_COMPILE_IGNORE_INTERNAL_CLASSES) &&
-				     ((*pce)->type == ZEND_INTERNAL_CLASS))) {
-				    if (CG(compiler_options) & ZEND_COMPILE_DELAYED_BINDING) {
-						zend_uint *opline_num = &CG(active_op_array)->early_binding;
+				if (CG(compiler_options) & ZEND_COMPILE_DELAYED_BINDING) {
+					zend_uint *opline_num = &CG(active_op_array)->early_binding;
 
-						while (*opline_num != -1) {
-							opline_num = &CG(active_op_array)->opcodes[*opline_num].result.opline_num;
-						}
-						*opline_num = opline - CG(active_op_array)->opcodes;
-						opline->opcode = ZEND_DECLARE_INHERITED_CLASS_DELAYED;
-						opline->result_type = IS_UNUSED;
-						opline->result.opline_num = -1;
+					while (*opline_num != -1) {
+						opline_num = &CG(active_op_array)->opcodes[*opline_num].result.opline_num;
 					}
+					*opline_num = opline - CG(active_op_array)->opcodes;
+					opline->opcode = ZEND_DECLARE_INHERITED_CLASS_DELAYED;
+					opline->result_type = IS_UNUSED;
+					opline->result.opline_num = -1;
 					return;
 				}
+
+				if (zend_lookup_class(Z_STRVAL_P(parent_name), Z_STRLEN_P(parent_name), &pce TSRMLS_CC) == FAILURE
+					|| ((CG(compiler_options) & ZEND_COMPILE_IGNORE_INTERNAL_CLASSES) &&
+					  (*pce)->type == ZEND_INTERNAL_CLASS)) {
+					return;
+				}
+
 				if (do_bind_inherited_class(CG(active_op_array), opline, CG(class_table), *pce, 1 TSRMLS_CC) == NULL) {
 					return;
 				}
