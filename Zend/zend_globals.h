@@ -181,8 +181,19 @@ struct _zend_executor_globals {
 
 	int ticks_count;
 
-	HashTable *in_autoload;
-	zend_function *autoload_func;
+    // TEMPORARY
+    HashTable *in_autoload;
+    zend_function *autoload_func;
+	struct {
+        struct {
+            HashTable class;
+            HashTable function;
+            HashTable constant;
+        } stack;
+        HashTable functions;
+        zend_function *legacy;
+    } autoload;
+
 	zend_bool full_tables_cleanup;
 
 	/* for extended information support */
