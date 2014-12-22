@@ -922,12 +922,7 @@ int zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_cache) /
 ZEND_API zend_class_entry *zend_lookup_class_ex(zend_string *name, const zval *key, int use_autoload) /* {{{ */
 {
 	zend_class_entry *ce = NULL;
-	zval args[1];
-	zval local_retval;
-	int retval;
 	zend_string *lc_name;
-	zend_fcall_info fcall_info;
-	zend_fcall_info_cache fcall_cache;
 
 	if (key) {
 		lc_name = Z_STR_P(key);
