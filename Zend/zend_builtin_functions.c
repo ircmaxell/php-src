@@ -182,6 +182,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_function_exists, 0, 0, 1)
 	ZEND_ARG_INFO(0, function_name)
+	ZEND_ARG_INFO(0, autoload)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_class_alias, 0, 0, 2)
@@ -246,13 +247,13 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_extension_loaded, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_register, 0, 0, 1)
-    ZEND_ARG_INFO(0, callback)
-    ZEND_ARG_INFO(0, type)
-    ZEND_ARG_INFO(0, prepend)
+	ZEND_ARG_INFO(0, callback)
+	ZEND_ARG_INFO(0, type)
+	ZEND_ARG_INFO(0, prepend)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_unregister, 0, 0, 1)
-    ZEND_ARG_INFO(0, callback)
+	ZEND_ARG_INFO(0, callback)
 ZEND_END_ARG_INFO()
 /* }}} */
 
@@ -324,8 +325,8 @@ static const zend_function_entry builtin_functions[] = { /* {{{ */
 	ZEND_FE(gc_enabled, 		arginfo_zend__void)
 	ZEND_FE(gc_enable, 		arginfo_zend__void)
 	ZEND_FE(gc_disable, 		arginfo_zend__void)
-    ZEND_NS_FE("php", autoload_register, arginfo_autoload_register)
-    ZEND_NS_FE("php", autoload_unregister, arginfo_autoload_unregister)
+	ZEND_NS_FE("php", autoload_register, arginfo_autoload_register)
+	ZEND_NS_FE("php", autoload_unregister, arginfo_autoload_unregister)
 	ZEND_FE_END
 };
 /* }}} */
@@ -1447,36 +1448,27 @@ ZEND_FUNCTION(trait_exists)
 }
 /* }}} */
 
-/* {{{ proto bool function_exists(string function_name) 
+/* {{{ proto bool function_exists(string function_name[, autoload = 1]) 
    Checks if the function exists */
 ZEND_FUNCTION(function_exists)
 {
-	char *name;
-	size_t name_len;
+	zend_string *name;
 	zend_function *func;
-	zend_string *lcname;
+	zend_bool autoload = 1;
 	
 #ifndef FAST_ZPP
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &name, &name_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|b", &name, &autoload) == FAILURE) {
 		return;
 	}
 #else
-	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_STRING(name, name_len)
+	ZEND_PARSE_PARAMETERS_START(1, 2)
+		Z_PARAM_STR(name)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_BOOL(autoload)
 	ZEND_PARSE_PARAMETERS_END();
 #endif
 
-	if (name[0] == '\\') {
-		/* Ignore leading "\" */
-		lcname = zend_string_alloc(name_len - 1, 0);
-		zend_str_tolower_copy(lcname->val, name + 1, name_len - 1);
-	} else {
-		lcname = zend_string_alloc(name_len, 0);
-		zend_str_tolower_copy(lcname->val, name, name_len);
-	}
-	
-	func = zend_hash_find_ptr(EG(function_table), lcname);	
-	zend_string_free(lcname);
+	func = zend_lookup_function_ex(name, NULL, autoload);
 
 	/*
 	 * A bit of a hack, but not a bad one: we see if the handler of the function
