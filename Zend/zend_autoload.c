@@ -109,38 +109,12 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
     return zend_hash_find_ptr(symbol_table, lname);
 }
 
-static zend_string* zend_autoload_get_key(zend_fcall_info *fci)
-{
-    switch (Z_TYPE(fci->function_name)) {
-        case IS_STRING: {
-            zend_string *ret = Z_STR(fci->function_name);
-            zend_string_addref(ret);
-            return ret;
-        }
-        case IS_OBJECT: {
-            char handle[16];
-            sprintf(handle, "%lu", (unsigned long) Z_OBJ_HANDLE(fci->function_name));
-            return zend_string_init(handle, sizeof(uint32_t), 0);
-        }
-    }
-    return NULL;
-}
-
-
 int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
 {
-    zend_string *key;
 
-    key = zend_autoload_get_key(&func->fci);
-    if (key == NULL) {
-        zend_error_noreturn(E_ERROR, "Unknown function type provided");
-    }
-
-    if (zend_hash_add_ptr(&EG(autoload.functions), key, func) == NULL) {
-        zend_string_release(key);
+    if (zend_hash_next_index_insert_ptr(&EG(autoload.functions), func) == NULL) {
         return FAILURE;
     }
-    zend_string_release(key);
 
     if (prepend) {
         HT_MOVE_TAIL_TO_HEAD(&EG(autoload.functions));
@@ -150,15 +124,34 @@ int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
 
 int zend_autoload_unregister(zend_autoload_func* func)
 {
-    zend_string *key;
+    zval *val;
+    zend_ulong h;
 
-    key = zend_autoload_get_key(&func->fci);
+    zval func_name = func->fci.function_name;
+    zval current;
 
-    zend_hash_del(&EG(autoload.functions), key);
+    ZEND_HASH_FOREACH_NUM_KEY_VAL(&EG(autoload.functions), h, val)
+        current = ((zend_autoload_func*) Z_PTR_P(val))->fci.function_name;
+        if (Z_TYPE(func_name) != Z_TYPE(current)) {
+            continue;
+        }
+        switch (Z_TYPE(func_name)) {
+            case IS_STRING:
+                if (zend_string_equals(Z_STR(func_name), Z_STR(current))) {
+                    // unset this one
+                    zend_hash_index_del(&EG(autoload.functions), h);
+                    return SUCCESS;
+                }
+            case IS_OBJECT:
+                if (Z_OBJ_HANDLE(current) == Z_OBJ_HANDLE(func_name)) {
+                    // unset this one
+                    zend_hash_index_del(&EG(autoload.functions), h);
+                    return SUCCESS;   
+                }
+        }
+    ZEND_HASH_FOREACH_END();
 
-    zend_string_release(key);
-
-    return SUCCESS;
+    return FAILURE;
 }
 
 void zend_autoload_dtor(zval *pzv)
