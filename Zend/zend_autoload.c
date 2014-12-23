@@ -40,7 +40,7 @@
 void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
 {
     HashTable *symbol_table, *stack;
-    zval dummy, ztype, zname, retval;
+    zval ztype, zname, retval;
     zend_autoload_func *func_info;
 
     /* Verify autoload name before passing it to __autoload() */
@@ -48,9 +48,8 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
         return NULL;
     }
 
-    ZVAL_UNDEF(&dummy);
     ZVAL_LONG(&ztype, type);
-    ZVAL_STR(&zname, name);
+    ZVAL_STR(&zname, name);    
 
     switch (type) {
         case ZEND_AUTOLOAD_CLASS:
@@ -69,7 +68,7 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
             return NULL;
     }
 
-    if (zend_hash_add(stack, lname, &dummy) == NULL) {
+    if (zend_hash_add_empty_element(stack, lname) == NULL) {
         // Recursion protection, add it early
         // as it will protect __autoload legacy behavior
         // as well
@@ -86,6 +85,7 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
             if (call) {
                 zend_call_method_with_1_params(NULL, NULL, &call, ZEND_AUTOLOAD_FUNC_NAME, &retval, &zname);
                 zend_hash_del(stack, lname);
+
                 return zend_hash_find_ptr(symbol_table, lname);
             }
         }
