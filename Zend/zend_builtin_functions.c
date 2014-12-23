@@ -252,6 +252,21 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_register, 0, 0, 1)
 	ZEND_ARG_INFO(0, prepend)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_class_register, 0, 0, 1)
+	ZEND_ARG_INFO(0, callback)
+	ZEND_ARG_INFO(0, prepend)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_function_register, 0, 0, 1)
+	ZEND_ARG_INFO(0, callback)
+	ZEND_ARG_INFO(0, prepend)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_constant_register, 0, 0, 1)
+	ZEND_ARG_INFO(0, callback)
+	ZEND_ARG_INFO(0, prepend)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_unregister, 0, 0, 1)
 	ZEND_ARG_INFO(0, callback)
 ZEND_END_ARG_INFO()
@@ -327,6 +342,9 @@ static const zend_function_entry builtin_functions[] = { /* {{{ */
 	ZEND_FE(gc_disable, 		arginfo_zend__void)
 	ZEND_NS_FE("php", autoload_register, arginfo_autoload_register)
 	ZEND_NS_FE("php", autoload_unregister, arginfo_autoload_unregister)
+	ZEND_NS_FE("php", autoload_class_register, arginfo_autoload_class_register)
+	ZEND_NS_FE("php", autoload_constant_register, arginfo_autoload_constant_register)
+	ZEND_NS_FE("php", autoload_function_register, arginfo_autoload_function_register)
 	ZEND_FE_END
 };
 /* }}} */

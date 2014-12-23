@@ -24,6 +24,9 @@
 
 ZEND_FUNCTION(autoload_register);
 ZEND_FUNCTION(autoload_unregister);
+ZEND_FUNCTION(autoload_class_register);
+ZEND_FUNCTION(autoload_function_register);
+ZEND_FUNCTION(autoload_constant_register);
 
 typedef struct {
     zend_fcall_info fci;
