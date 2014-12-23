@@ -124,26 +124,26 @@ int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
 
 int zend_autoload_unregister(zend_autoload_func* func)
 {
-    zval *val;
     zend_ulong h;
 
-    zval func_name = func->fci.function_name;
-    zval current;
+    zval *func_name = &func->fci.function_name;
+    zval *current_name;
+    zend_autoload_func *current;
 
-    ZEND_HASH_FOREACH_NUM_KEY_VAL(&EG(autoload.functions), h, val)
-        current = ((zend_autoload_func*) Z_PTR_P(val))->fci.function_name;
-        if (Z_TYPE(func_name) != Z_TYPE(current)) {
+    ZEND_HASH_FOREACH_NUM_KEY_PTR(&EG(autoload.functions), h, current)
+        current_name = &current->fci.function_name;
+        if (Z_TYPE_P(func_name) != Z_TYPE_P(current_name)) {
             continue;
         }
-        switch (Z_TYPE(func_name)) {
+        switch (Z_TYPE_P(func_name)) {
             case IS_STRING:
-                if (zend_string_equals(Z_STR(func_name), Z_STR(current))) {
+                if (zend_string_equals(Z_STR_P(func_name), Z_STR_P(current_name))) {
                     // unset this one
                     zend_hash_index_del(&EG(autoload.functions), h);
                     return SUCCESS;
                 }
             case IS_OBJECT:
-                if (Z_OBJ_HANDLE(current) == Z_OBJ_HANDLE(func_name)) {
+                if (Z_OBJ_HANDLE_P(current_name) == Z_OBJ_HANDLE_P(func_name)) {
                     // unset this one
                     zend_hash_index_del(&EG(autoload.functions), h);
                     return SUCCESS;   
