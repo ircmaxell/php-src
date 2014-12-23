@@ -342,7 +342,7 @@ PHP_FUNCTION(spl_autoload)
 	}
 	zend_string_free(lc_name);
 
-	if (!found && !SPL_G(autoload_running)) {
+	if (!found && zend_hash_num_elements(&EG(autoload.stack.class)) == 0) {
 		/* For internal errors, we generate E_ERROR, for direct calls an exception is thrown.
 		 * The "scope" is determined by an opcode, if it is ZEND_FETCH_CLASS we know function was called indirectly by
 		 * the Zend engine.
