@@ -78,7 +78,7 @@ ZEND_API zval* zend_call_method(zval *object, zend_class_entry *obj_ce, zend_fun
 		if (!fn_proxy || !*fn_proxy) {
 			if ((fcic.function_handler = zend_hash_find_ptr(function_table, Z_STR(fci.function_name))) == NULL) {
 				/* try autoload before erroring */
-				if (!obj_ce && !zend_lookup_function(Z_STR(fci.function_name))) {
+				if (obj_ce != NULL || NULL == (fcic.function_handler = zend_lookup_function(Z_STR(fci.function_name)))) {
 					/* error at c-level */
 					zend_error(E_CORE_ERROR, "Couldn't find implementation for method %s%s%s", obj_ce ? obj_ce->name->val : "", obj_ce ? "::" : "", function_name);
 				}

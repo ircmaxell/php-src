@@ -2486,7 +2486,6 @@ ZEND_VM_HANDLER(59, ZEND_INIT_FCALL_BY_NAME, ANY, CONST|TMPVAR|CV)
 	USE_OPLINE
 	zend_function *fbc;
 	zval *function_name;
-
 	if (OP2_TYPE == IS_CONST && Z_TYPE_P(EX_CONSTANT(opline->op2)) == IS_STRING) {
 		function_name = (zval*)(EX_CONSTANT(opline->op2)+1);
 		if (CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)))) {
@@ -2681,7 +2680,8 @@ ZEND_VM_HANDLER(69, ZEND_INIT_NS_FCALL_BY_NAME, ANY, CONST)
 	func_name = EX_CONSTANT(opline->op2) + 1;
 	if (CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)))) {
 		fbc = CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)));
-	} else if (!ZEND_LOOKUP_FUNCTION_BY_NAME(Z_STR_P(func_name), fbc)) {
+	} else if ((func = zend_hash_find(EG(function_table), Z_STR_P(func_name))) == NULL) {
+        // Don't autoload the global function
 		func_name++;
 		if (!ZEND_LOOKUP_FUNCTION_BY_NAME(Z_STR_P(func_name), fbc)) {
 			SAVE_OPLINE();
@@ -2690,6 +2690,7 @@ ZEND_VM_HANDLER(69, ZEND_INIT_NS_FCALL_BY_NAME, ANY, CONST)
 			CACHE_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)), fbc);
 		}
 	} else {
+        fbc = Z_FUNC_P(func);
 		CACHE_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)), fbc);
 	}
 
