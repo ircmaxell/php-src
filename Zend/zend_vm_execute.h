@@ -1546,7 +1546,7 @@ static int ZEND_FASTCALL  ZEND_INIT_FCALL_BY_NAME_SPEC_CONST_HANDLER(ZEND_OPCODE
 		function_name = (zval*)(EX_CONSTANT(opline->op2)+1);
 		if (CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)))) {
 			fbc = CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)));
-        } else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), function_name, fbc))) {
+		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), function_name, fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(EX_CONSTANT(opline->op2)));
 		} else {
@@ -1916,7 +1916,7 @@ static int ZEND_FASTCALL  ZEND_INIT_FCALL_BY_NAME_SPEC_CV_HANDLER(ZEND_OPCODE_HA
 		function_name = (zval*)(EX_CONSTANT(opline->op2)+1);
 		if (CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)))) {
 			fbc = CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)));
-		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_NAME(Z_STR_P(function_name), fbc))) {
+		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), function_name, fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(EX_CONSTANT(opline->op2)));
 		} else {
@@ -2094,7 +2094,7 @@ static int ZEND_FASTCALL  ZEND_INIT_FCALL_BY_NAME_SPEC_TMPVAR_HANDLER(ZEND_OPCOD
 		function_name = (zval*)(EX_CONSTANT(opline->op2)+1);
 		if (CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)))) {
 			fbc = CACHED_PTR(Z_CACHE_SLOT_P(EX_CONSTANT(opline->op2)));
-		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_NAME(Z_STR_P(function_name), fbc))) {
+		} else if (UNEXPECTED(!ZEND_LOOKUP_FUNCTION_BY_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), function_name, fbc))) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(EX_CONSTANT(opline->op2)));
 		} else {

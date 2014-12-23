@@ -33,7 +33,9 @@
         memmove((ht)->arData + 1, (ht)->arData,                 \
             sizeof(Bucket) * ((ht)->nNumUsed - 1));             \
         (ht)->arData[0] = tmp;                                  \
-        zend_hash_rehash(ht);                                   \
+        if (!((ht)->u.flags & HASH_FLAG_PACKED)) {              \
+            zend_hash_rehash(ht);                               \
+        }                                                       \
     } while (0)
 
 

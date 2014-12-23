@@ -2683,7 +2683,7 @@ ZEND_VM_HANDLER(69, ZEND_INIT_NS_FCALL_BY_NAME, ANY, CONST)
 	} else if ((func = zend_hash_find(EG(function_table), Z_STR_P(func_name))) == NULL) {
         // Don't autoload the global function
 		func_name++;
-		if (!ZEND_LOOKUP_FUNCTION_BY_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), func_name, fbc)) {
+		if (!ZEND_LOOKUP_FUNCTION_BY_NS_KEY(Z_STR_P(EX_CONSTANT(opline->op2)), func_name, fbc)) {
 			SAVE_OPLINE();
 			zend_error_noreturn(E_ERROR, "Call to undefined function %s()", Z_STRVAL_P(EX_CONSTANT(opline->op2)));
 		} else {
