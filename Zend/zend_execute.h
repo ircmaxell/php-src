@@ -43,9 +43,12 @@ ZEND_API void execute_internal(zend_execute_data *execute_data, zval *return_val
 ZEND_API zend_class_entry *zend_lookup_class(zend_string *name);
 ZEND_API zend_class_entry *zend_lookup_class_ex(zend_string *name, const zval *key, int use_autoload);
 ZEND_API zend_function *zend_lookup_function(zend_string *name);
+ZEND_API zend_function *zend_lookup_function_ns(zend_string *name);
 ZEND_API zend_function *zend_lookup_function_ex(zend_string *name, const zval *key, int use_autoload);
 
 #define ZEND_LOOKUP_FUNCTION_BY_NAME(name, fbc) ((fbc = (zend_function*) zend_hash_find_ptr(EG(function_table), name)) != NULL || (fbc = zend_lookup_function(name)) != NULL)
+#define ZEND_LOOKUP_FUNCTION_BY_KEY(name, key, fbc) ((fbc = (zend_function*) zend_hash_find_ptr(EG(function_table), Z_STR_P(key))) != NULL || (fbc = zend_lookup_function_ex(name, key, 1)) != NULL)
+#define ZEND_LOOKUP_FUNCTION_BY_NS_KEY(name, key, fbc) ((fbc = (zend_function*) zend_hash_find_ptr(EG(function_table), Z_STR_P(key))) != NULL || (fbc = zend_lookup_function_ns(name)) != NULL)
 
 ZEND_API int zend_eval_string(char *str, zval *retval_ptr, char *string_name);
 ZEND_API int zend_eval_stringl(char *str, size_t str_len, zval *retval_ptr, char *string_name);

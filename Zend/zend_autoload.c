@@ -218,7 +218,7 @@ static zend_bool zend_autoload_register_internal(INTERNAL_FUNCTION_PARAMETERS, l
         return 0;
     }
 
-    Z_ADDREF(func->fci.function_name);
+    Z_TRY_ADDREF(func->fci.function_name);
 
     return 1;
 }

@@ -983,6 +983,24 @@ ZEND_API zend_function *zend_lookup_function(zend_string *name) /* {{{ */
 }
 /* }}} */
 
+ZEND_API zend_function *zend_lookup_function_ns(zend_string *name) /* {{{ */
+{
+    int pos = name->len - 1;
+    zend_string *new_name;
+    zend_function *result;
+
+    while (pos > 0 && name->val[pos - 1] != '\\') {
+        pos--;
+    }
+
+    new_name = zend_string_init(name->val + pos, name->len - pos, 0);
+    result = zend_lookup_function_ex(new_name, NULL, 1);
+    zend_string_release(new_name);
+    return result;
+}
+/* }}} */
+
+
 ZEND_API zend_function *zend_lookup_function_ex(zend_string *name, const zval *key, int use_autoload) /* {{{ */
 {
     zend_function *fe = NULL;
