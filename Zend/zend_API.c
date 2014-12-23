@@ -799,7 +799,10 @@ static int zend_parse_arg(int arg_num, zval *arg, va_list *va, const char **spec
 						class_name, space, get_active_function_name(), arg_num, expected_type,
 						zend_zval_type_name(arg));
 			}
-		}
+		} else if (error) {
+            /* quiet mode */
+            efree(error);
+        }
 		if (severity != E_STRICT) {
 			return FAILURE;
 		}
