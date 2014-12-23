@@ -98,6 +98,7 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
             func_info->fci.retval = &retval;
             zend_fcall_info_argn(&func_info->fci, 2, &zname, &ztype);
             zend_call_function(&func_info->fci, &func_info->fcc);
+            zend_fcall_info_args_clear(&func_info->fci, 1);
             zend_exception_save();
             if (zend_hash_exists(symbol_table, lname)) {
                 break;
@@ -105,7 +106,6 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
         }
     ZEND_HASH_FOREACH_END();
 
-    zend_fcall_info_args_clear(&func_info->fci, 1);
     zend_exception_restore();
 
     zend_hash_del(stack, lname);
@@ -189,6 +189,9 @@ static zend_bool zend_autoload_register_internal(INTERNAL_FUNCTION_PARAMETERS, l
         efree(func);
         return 0;
     }
+
+    Z_ADDREF(func->fci.function_name);
+
     return 1;
 }
 

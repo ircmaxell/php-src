@@ -427,6 +427,25 @@ PHP_FUNCTION(spl_autoload_register)
             efree(func);
         }
         RETURN_BOOL(success == SUCCESS);
+    } else if (0 == ZEND_NUM_ARGS()) {
+        zval callback;
+        zend_string *name = zend_string_init("spl_autoload", sizeof("spl_autoload") - 1, 0);
+        zend_string *cbname;
+        char *error;
+        ZVAL_STR(&callback, name);
+        zend_fcall_info_init(&callback, 0, &func->fci, &func->fcc, &cbname, &error);
+        if (cbname) {
+            zend_string_release(cbname);
+        }
+        if (error) {
+            efree(error);
+        } else {
+            success = zend_autoload_register(func, prepend);
+            if (FAILURE == success) {
+                efree(func);
+            }
+            RETURN_BOOL(success == SUCCESS);
+        }
     }
 
     efree(func);
@@ -491,9 +510,6 @@ PHP_FUNCTION(spl_autoload_register)
             zend_string_release(func_name);
             RETURN_FALSE;
         }
-        ZEND_ASSERT(1==0);
-    } else {
-        /* TODO: add support for empty registering spl_autoload */
     }
 
     
@@ -545,7 +561,6 @@ PHP_FUNCTION(spl_autoload_unregister)
 PHP_FUNCTION(spl_autoload_functions)
 {
     zend_autoload_func *func_info;
-    zval *callable;
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
@@ -561,6 +576,7 @@ PHP_FUNCTION(spl_autoload_functions)
     }
     array_init(return_value);
     ZEND_HASH_FOREACH_PTR(&EG(autoload.functions), func_info)
+        Z_TRY_ADDREF(func_info->fci.function_name);
         add_next_index_zval(return_value, &func_info->fci.function_name);
     ZEND_HASH_FOREACH_END();
 } /* }}} */
