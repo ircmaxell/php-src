@@ -151,10 +151,10 @@ void init_executor(void) /* {{{ */
 	EG(autoload_func) = NULL;
 	EG(error_handling) = EH_NORMAL;
 
-    ZEND_INIT_SYMTABLE(&EG(autoload.stack.class));
-    ZEND_INIT_SYMTABLE(&EG(autoload.stack.function));
-    ZEND_INIT_SYMTABLE(&EG(autoload.stack.constant));
-    ZEND_INIT_SYMTABLE(&EG(autoload.functions));
+    zend_hash_init(&EG(autoload.stack.class), 8, NULL, NULL, 0);
+    zend_hash_init(&EG(autoload.stack.function), 8, NULL, NULL, 0);
+    zend_hash_init(&EG(autoload.stack.constant), 8, NULL, NULL, 0);
+    zend_hash_init(&EG(autoload.functions), 8, NULL, zend_autoload_dtor, 0);
 
 	zend_vm_stack_init();
 
@@ -371,6 +371,10 @@ void shutdown_executor(void) /* {{{ */
 		zend_stack_destroy(&EG(user_error_handlers));
 		zend_stack_destroy(&EG(user_exception_handlers));
 		zend_objects_store_destroy(&EG(objects_store));
+        zend_hash_destroy(&EG(autoload.functions));
+        zend_hash_destroy(&EG(autoload.stack.class));
+        zend_hash_destroy(&EG(autoload.stack.function));
+        zend_hash_destroy(&EG(autoload.stack.constant));
 		if (EG(in_autoload)) {
 			zend_hash_destroy(EG(in_autoload));
 			FREE_HASHTABLE(EG(in_autoload));

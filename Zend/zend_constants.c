@@ -481,6 +481,10 @@ zend_constant *zend_quick_get_constant(const zval *key, zend_ulong flags)
 			}
 		}
 	}
+
+    if (c == NULL) {
+        c = (zend_constant*) zend_autoload_call(Z_STR_P(key), Z_STR_P(key), ZEND_AUTOLOAD_CONSTANT);
+    }
 	return c;
 }
 

@@ -25,6 +25,7 @@
 #include "zend_types.h"
 #include "zend_exceptions.h"
 #include "zend_interfaces.h"
+#include "zend_string.h"
 
 #define HT_MOVE_TAIL_TO_HEAD(ht)                            \
     do {                                                        \
@@ -111,8 +112,11 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
 static zend_string* zend_autoload_get_key(zend_fcall_info *fci)
 {
     switch (Z_TYPE(fci->function_name)) {
-        case IS_STRING:
-            return Z_STR(fci->function_name);
+        case IS_STRING: {
+            zend_string *ret = Z_STR(fci->function_name);
+            zend_string_addref(ret);
+            return ret;
+        }
         case IS_OBJECT: {
             char handle[16];
             sprintf(handle, "%lu", (unsigned long) Z_OBJ_HANDLE(fci->function_name));
@@ -133,8 +137,10 @@ int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
     }
 
     if (zend_hash_add_ptr(&EG(autoload.functions), key, func) == NULL) {
+        zend_string_release(key);
         return FAILURE;
     }
+    zend_string_release(key);
 
     if (prepend) {
         HT_MOVE_TAIL_TO_HEAD(&EG(autoload.functions));
@@ -150,7 +156,15 @@ int zend_autoload_unregister(zend_autoload_func* func)
 
     zend_hash_del(&EG(autoload.functions), key);
 
+    zend_string_release(key);
+
     return SUCCESS;
+}
+
+void zend_autoload_dtor(zval *pzv)
+{
+    zend_autoload_func *func = Z_PTR_P(pzv);
+    efree(func);
 }
 
 ZEND_FUNCTION(autoload_register)
@@ -170,6 +184,7 @@ ZEND_FUNCTION(autoload_register)
     }
 
     if (zend_autoload_register(func, prepend) == FAILURE) {
+        efree(func);
         RETURN_FALSE;
     }
     RETURN_TRUE;

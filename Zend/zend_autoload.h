@@ -35,6 +35,7 @@ typedef struct {
 void* zend_autoload_call(zend_string *name, zend_string *lname, long type);
 int zend_autoload_register(zend_autoload_func* func, zend_bool prepend);
 int zend_autoload_unregister(zend_autoload_func* func);
+void zend_autoload_dtor(zval *pzv);
 
 #define ZEND_AUTOLOAD_CLASS     (1<<0)
 #define ZEND_AUTOLOAD_FUNCTION  (1<<1)
