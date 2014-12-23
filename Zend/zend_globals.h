@@ -192,6 +192,7 @@ struct _zend_executor_globals {
         } stack;
         HashTable functions;
         zend_function *legacy;
+        size_t class_loader_count;
     } autoload;
 
 	zend_bool full_tables_cleanup;

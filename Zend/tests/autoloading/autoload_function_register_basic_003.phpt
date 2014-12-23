@@ -1,5 +1,5 @@
 --TEST--
-Test php\autoload_function_register(): basic behavior 003
+Test php\autoload_register(): function basic behavior 003
 --FILE--
 <?php
 /**
@@ -11,9 +11,9 @@ namespace Bar {
 
 use function Baz\foo;
 
-echo "*** Testing php\autoload_function_register() : basic behavior ***\n";
+echo "*** Testing php\autoload_register() : basic behavior ***\n";
 
-\php\autoload_function_register("var_dump");
+\php\autoload_register(\php\AUTOLOAD_FUNCTION, "var_dump");
 
 foo();
 
@@ -21,7 +21,7 @@ foo();
 
 ?>
 --EXPECTF--
-*** Testing php\autoload_function_register() : basic behavior ***
+*** Testing php\autoload_register() : basic behavior ***
 string(7) "Baz\foo"
 
 Fatal error: Call to undefined function Baz\foo() in %s on line %d

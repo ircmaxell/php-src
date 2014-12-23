@@ -155,6 +155,7 @@ void init_executor(void) /* {{{ */
     zend_hash_init(&EG(autoload.stack.function), 8, NULL, NULL, 0);
     zend_hash_init(&EG(autoload.stack.constant), 8, NULL, NULL, 0);
     zend_hash_init(&EG(autoload.functions), 8, NULL, zend_autoload_dtor, 0);
+    EG(autoload.class_loader_count) = 0;
 
 	zend_vm_stack_init();
 

@@ -342,7 +342,7 @@ PHP_FUNCTION(spl_autoload)
 	}
 	zend_string_free(lc_name);
 
-	if (!found && zend_hash_num_elements(&EG(autoload.stack.class)) == 0) {
+	if (!found && (zend_hash_num_elements(&EG(autoload.stack.class)) == 0 || EG(autoload.class_loader_count) == 1)) {
 		/* For internal errors, we generate E_ERROR, for direct calls an exception is thrown.
 		 * The "scope" is determined by an opcode, if it is ZEND_FETCH_CLASS we know function was called indirectly by
 		 * the Zend engine.
@@ -422,7 +422,7 @@ PHP_FUNCTION(spl_autoload_register)
     func->type = ZEND_AUTOLOAD_CLASS;
 
     if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "f|bb", &func->fci, &func->fcc, &do_throw, &prepend) == SUCCESS) {
-        success = zend_autoload_register(func, prepend);
+        success = zend_autoload_register(func, prepend ? ZEND_AUTOLOAD_FLAG_PREPEND : 0);
         if (FAILURE == success) {
             efree(func);
         }
@@ -440,7 +440,7 @@ PHP_FUNCTION(spl_autoload_register)
         if (error) {
             efree(error);
         } else {
-            success = zend_autoload_register(func, prepend);
+            success = zend_autoload_register(func, prepend ? ZEND_AUTOLOAD_FLAG_PREPEND : 0);
             if (FAILURE == success) {
                 efree(func);
             }

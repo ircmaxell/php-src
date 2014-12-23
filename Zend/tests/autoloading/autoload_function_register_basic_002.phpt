@@ -1,5 +1,5 @@
 --TEST--
-Test php\autoload_function_register(): basic behavior 002
+Test php\autoload_register(): basic behavior 002
 --FILE--
 <?php
 /**
@@ -8,9 +8,9 @@ Test php\autoload_function_register(): basic behavior 002
  * Only the global function name should be attempted to be autoloaded
  */
 namespace Bar {
-echo "*** Testing php\autoload_function_register() : basic behavior ***\n";
+echo "*** Testing php\autoload_register() : basic behavior ***\n";
 
-\php\autoload_function_register("var_dump");
+\php\autoload_register(\php\AUTOLOAD_FUNCTION, "var_dump");
 
 Foo();
 
@@ -18,7 +18,7 @@ Foo();
 
 ?>
 --EXPECTF--
-*** Testing php\autoload_function_register() : basic behavior ***
+*** Testing php\autoload_register() : basic behavior ***
 string(3) "Foo"
 
 Fatal error: Call to undefined function Bar\Foo() in %s on line %d

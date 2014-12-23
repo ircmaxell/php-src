@@ -148,7 +148,7 @@ return_null:
     return NULL;
 }
 
-int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
+int zend_autoload_register(zend_autoload_func* func, long flags)
 {
     Z_TRY_ADDREF(func->fci.function_name);
     if (zend_hash_next_index_insert_ptr(&EG(autoload.functions), func) == NULL) {
@@ -156,9 +156,14 @@ int zend_autoload_register(zend_autoload_func* func, zend_bool prepend)
         return FAILURE;
     }
 
-    if (prepend) {
+    if (func->type & ZEND_AUTOLOAD_CLASS) {
+        EG(autoload.class_loader_count)++;
+    }
+
+    if (flags & ZEND_AUTOLOAD_FLAG_PREPEND) {
         HT_MOVE_TAIL_TO_HEAD(&EG(autoload.functions));
     }
+
     return SUCCESS;
 }
 
@@ -179,12 +184,18 @@ int zend_autoload_unregister(zend_autoload_func* func)
             case IS_STRING:
                 if (zend_string_equals(Z_STR_P(func_name), Z_STR_P(current_name))) {
                     // unset this one
+                    if (current->type & ZEND_AUTOLOAD_CLASS) {
+                        EG(autoload.class_loader_count)--;
+                    }
                     zend_hash_index_del(&EG(autoload.functions), h);
                     return SUCCESS;
                 }
             case IS_OBJECT:
                 if (Z_OBJ_HANDLE_P(current_name) == Z_OBJ_HANDLE_P(func_name)) {
                     // unset this one
+                    if (current->type & ZEND_AUTOLOAD_CLASS) {
+                        EG(autoload.class_loader_count)--;
+                    }
                     zend_hash_index_del(&EG(autoload.functions), h);
                     return SUCCESS;   
                 }
@@ -198,46 +209,42 @@ void zend_autoload_dtor(zval *pzv)
 {
     zend_autoload_func *func = Z_PTR_P(pzv);
     zval_ptr_dtor(&func->fci.function_name);
+    if (func->type & ZEND_AUTOLOAD_CLASS) {
+        EG(autoload.class_loader_count)--;
+    }
     efree(func);
 }
 
-static zend_bool zend_autoload_register_internal(INTERNAL_FUNCTION_PARAMETERS, long type)
+ZEND_FUNCTION(autoload_register)
 {
     zend_autoload_func *func;
-    zend_bool prepend = 0;
+    long flags = 0;
 
     func = emalloc(sizeof(zend_autoload_func));
 
-    func->type = type;
-
-    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), "f|b", &func->fci, &func->fcc, &prepend)) {
+    if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), "lf|l", &func->type, &func->fci, &func->fcc, &flags)) {
         efree(func);
-        return 0;
+        return;
     }
-    
-    if (zend_autoload_register(func, prepend) == FAILURE) {
+
+    switch (func->type) {
+        case ZEND_AUTOLOAD_CLASS:
+        case ZEND_AUTOLOAD_FUNCTION:
+        case ZEND_AUTOLOAD_CONSTANT:
+            break;
+        default:
+            zend_error(E_WARNING, "Provided autoloader type is invalid: %d", func->type);
+            RETURN_FALSE;
+    }
+
+    if (zend_autoload_register(func, flags) == FAILURE) {
         efree(func);
-        return 0;
+        RETURN_FALSE;
     }
 
     Z_TRY_ADDREF(func->fci.function_name);
 
-    return 1;
-}
-
-ZEND_FUNCTION(autoload_class_register) 
-{
-    RETURN_BOOL(zend_autoload_register_internal(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_AUTOLOAD_CLASS));
-}
-
-ZEND_FUNCTION(autoload_function_register) 
-{
-    RETURN_BOOL(zend_autoload_register_internal(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_AUTOLOAD_FUNCTION));
-}
-
-ZEND_FUNCTION(autoload_constant_register) 
-{
-    RETURN_BOOL(zend_autoload_register_internal(INTERNAL_FUNCTION_PARAM_PASSTHRU, ZEND_AUTOLOAD_CONSTANT));
+    RETURN_TRUE;
 }
 
 ZEND_FUNCTION(autoload_unregister)
