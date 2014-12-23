@@ -69,23 +69,27 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
             return NULL;
     }
 
+    if (zend_hash_add(stack, lname, &dummy) == NULL) {
+        // Recursion protection, add it early
+        // as it will protect __autoload legacy behavior
+        // as well
+        return NULL;
+    }
+
     if (zend_hash_num_elements(&EG(autoload.functions)) == 0) {
         if (type == ZEND_AUTOLOAD_CLASS) {
             zend_function *call = EG(autoload.legacy);
             if (!call) {
-                call = (zend_function*) zend_hash_str_find_ptr(EG(function_table), ZEND_AUTOLOAD_FUNC_NAME, sizeof(ZEND_AUTOLOAD_FUNC_NAME));
+                call = (zend_function*) zend_hash_str_find_ptr(EG(function_table), ZEND_AUTOLOAD_FUNC_NAME, sizeof(ZEND_AUTOLOAD_FUNC_NAME) - 1);
                 EG(autoload.legacy) = call;
             }
             if (call) {
                 zend_call_method_with_1_params(NULL, NULL, &call, ZEND_AUTOLOAD_FUNC_NAME, &retval, &zname);
+                zend_hash_del(stack, lname);
                 return zend_hash_find_ptr(symbol_table, lname);
             }
         }
-        return NULL;
-    }
-
-    if (zend_hash_add(stack, lname, &dummy) == NULL) {
-        // Recursion protection
+        zend_hash_del(stack, lname);
         return NULL;
     }
 
@@ -105,7 +109,7 @@ void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
     zend_exception_restore();
 
     zend_hash_del(stack, lname);
-
+    
     return zend_hash_find_ptr(symbol_table, lname);
 }
 
