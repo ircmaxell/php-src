@@ -973,6 +973,60 @@ ZEND_API zend_class_entry *zend_lookup_class(zend_string *name) /* {{{ */
 }
 /* }}} */
 
+ZEND_API zend_function *zend_lookup_function(zend_string *name) /* {{{ */
+{
+    return zend_lookup_function_ex(name, NULL, 1);
+}
+/* }}} */
+
+ZEND_API zend_function *zend_lookup_function_ex(zend_string *name, const zval *key, int use_autoload) /* {{{ */
+{
+    zend_function *fe = NULL;
+    zend_string *lc_name;
+
+    if (key) {
+        lc_name = Z_STR_P(key);
+    } else {
+        if (name == NULL || !name->len) {
+            return NULL;
+        }
+
+        if (name->val[0] == '\\') {
+            lc_name = zend_string_alloc(name->len - 1, 0);
+            zend_str_tolower_copy(lc_name->val, name->val + 1, name->len - 1);
+        } else {
+            lc_name = zend_string_alloc(name->len, 0);
+            zend_str_tolower_copy(lc_name->val, name->val, name->len);
+        }
+    }
+
+    fe = zend_hash_find_ptr(EG(function_table), lc_name);
+    if (fe) {
+        if (!key) {
+            zend_string_free(lc_name);
+        }
+        return fe;
+    }
+
+    /* The compiler is not-reentrant. Make sure we __autoload() only during run-time
+     * (doesn't impact functionality of __autoload()
+    */
+    if (!use_autoload || zend_is_compiling()) {
+        if (!key) {
+            zend_string_free(lc_name);
+        }
+        return NULL;
+    }
+
+    fe = (zend_function*) zend_autoload_call(name, lc_name, ZEND_AUTOLOAD_FUNCTION);
+
+    if (!key) {
+        zend_string_free(lc_name);
+    }
+    return fe;
+}
+/* }}} */
+
 ZEND_API int zend_eval_stringl(char *str, size_t str_len, zval *retval_ptr, char *string_name) /* {{{ */
 {
 	zval pv;
