@@ -35,8 +35,20 @@
         (ht)->arData[0] = tmp;                                  \
         if (!((ht)->u.flags & HASH_FLAG_PACKED)) {              \
             zend_hash_rehash(ht);                               \
+        } else {                                                \
+            zend_autoload_reindex(ht);                          \
         }                                                       \
     } while (0)
+
+static void zend_autoload_reindex(HashTable *ht)
+{
+    size_t i;
+    ZEND_ASSERT(ht->u.flags & HASH_FLAG_PACKED);
+    for (i = 0; i < ht->nNumUsed; i++) {
+        ht->arData[i].h = i;
+    }
+}
+
 
 static zend_always_inline int zend_autoload_callback_equals(zend_autoload_func* func, zend_autoload_func* current) 
 {
