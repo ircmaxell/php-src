@@ -413,10 +413,9 @@ PHP_FUNCTION(spl_autoload_call)
  Register given function as __autoload() implementation */
 PHP_FUNCTION(spl_autoload_register)
 {
-    zval *zcallable = NULL;
     zend_autoload_func *func;
     int success = FAILURE;
-    zend_bool do_throw = 0, prepend = 0;
+    zend_bool do_throw = 1, prepend = 0;
 
     func = emalloc(sizeof(zend_autoload_func));
     func->type = ZEND_AUTOLOAD_CLASS;
@@ -442,76 +441,21 @@ PHP_FUNCTION(spl_autoload_register)
         } else {
             success = zend_autoload_register(func, prepend ? ZEND_AUTOLOAD_FLAG_PREPEND : 0);
             if (FAILURE == success) {
+
                 efree(func);
             }
+
+            ZVAL_PTR_DTOR(&callback);
             RETURN_BOOL(success == SUCCESS);
         }
-    }
 
+        ZVAL_PTR_DTOR(&callback);
+    }
     efree(func);
 
-    if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "|zbb", &zcallable, &do_throw, &prepend) == FAILURE) {
-        return;
+    if (do_throw) {
+        zend_throw_exception_ex(spl_ce_LogicException, 0, "Invalid callback supplied to spl_autoload_register");
     }
-
-    if (ZEND_NUM_ARGS()) {
-        /* Legacy error handling */
-        zend_fcall_info_cache fcc;
-        zend_string *func_name;
-        char *error = NULL;
-        zend_object *obj_ptr;
-        if (!zend_is_callable_ex(zcallable, NULL, IS_CALLABLE_STRICT, &func_name, &fcc, &error)) {
-            obj_ptr = fcc.object;
-            if (Z_TYPE_P(zcallable) == IS_ARRAY) {
-                if (!obj_ptr && fcc.function_handler && !(fcc.function_handler->common.fn_flags & ZEND_ACC_STATIC)) {
-                    if (do_throw) {
-                        zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array specifies a non static method but no object (%s)", error);
-                    }
-                    if (error) {
-                        efree(error);
-                    }
-                    zend_string_release(func_name);
-                    RETURN_FALSE;
-                } else if (do_throw) {
-                    zend_throw_exception_ex(spl_ce_LogicException, 0, "Passed array does not specify %s %smethod (%s)", fcc.function_handler ? "a callable" : "an existing", !obj_ptr ? "static " : "", error);
-                }
-                if (error) {
-                    efree(error);
-                }
-                zend_string_release(func_name);
-                RETURN_FALSE;
-            } else if (Z_TYPE_P(zcallable) == IS_STRING) {
-                if (do_throw) {
-                    zend_throw_exception_ex(spl_ce_LogicException, 0, "Function '%s' not %s (%s)", func_name->val, fcc.function_handler ? "callable" : "found", error);
-                }
-                if (error) {
-                    efree(error);
-                }
-                zend_string_release(func_name);
-                RETURN_FALSE;
-            } else {
-                if (do_throw) {
-                    zend_throw_exception_ex(spl_ce_LogicException, 0, "Illegal value passed (%s)", error);
-                }
-                if (error) {
-                    efree(error);
-                }
-                zend_string_release(func_name);
-                RETURN_FALSE;
-            }
-        } else if (fcc.function_handler->type == ZEND_INTERNAL_FUNCTION &&
-                   fcc.function_handler->internal_function.handler == zif_spl_autoload_call) {
-            if (do_throw) {
-                zend_throw_exception_ex(spl_ce_LogicException, 0, "Function spl_autoload_call() cannot be registered");
-            }
-            if (error) {
-                efree(error);
-            }
-            zend_string_release(func_name);
-            RETURN_FALSE;
-        }
-    }
-
     
 	RETURN_FALSE;
 } /* }}} */
@@ -531,9 +475,16 @@ PHP_FUNCTION(spl_autoload_unregister)
     func = emalloc(sizeof(zend_autoload_func));
 
     if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "f", &func->fci, &func->fcc) == SUCCESS) {
+        if (Z_TYPE(func->fci.function_name) == IS_STRING) {
+            zend_string *name = Z_STR(func->fci.function_name);
+            if (name->len == sizeof("spl_autoload_call") - 1 && !strcmp(name->val, "spl_autoload_call")) {
+                efree(func);
+                RETURN_BOOL(SUCCESS == zend_autoload_unregister_all(ZEND_AUTOLOAD_CLASS));
+            }
+        }
         success = zend_autoload_unregister(func);
         efree(func);
-        RETURN_BOOL(success);
+        RETURN_BOOL(success == SUCCESS);
     }
     efree(func);
 

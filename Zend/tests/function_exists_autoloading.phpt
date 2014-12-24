@@ -7,7 +7,7 @@ function_exists function : autoloading
  * Function is implemented in Zend/zend_builtin_functions.c
 */ 
 
-php\autoload_function_register(function ($name) {
+php\autoload_register(php\AUTOLOAD_FUNCTION, function ($name) {
     echo "$name: ";
 });
 

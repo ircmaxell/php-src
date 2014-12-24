@@ -132,5 +132,5 @@ TestFunc2(TestClass)
 %stestclass.class.inc
 bool(true)
 ===NOFUNCTION===
-Exception: Function 'unavailable_autoload_function' not found (function 'unavailable_autoload_function' not found or invalid function name)
+Exception: Invalid callback supplied to spl_autoload_register
 ===DONE===

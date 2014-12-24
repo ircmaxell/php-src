@@ -38,6 +38,28 @@
         }                                                       \
     } while (0)
 
+static zend_always_inline int zend_autoload_callback_equals(zend_autoload_func* func, zend_autoload_func* current) 
+{
+    zval *func_name = &func->fci.function_name;
+    zval *current_name = &current->fci.function_name;
+
+    if (Z_TYPE_P(func_name) != Z_TYPE_P(current_name)) {
+        return FAILURE;
+    }
+    switch (Z_TYPE_P(func_name)) {
+        case IS_STRING:
+            if (zend_string_equals(Z_STR_P(func_name), Z_STR_P(current_name))) {
+                return SUCCESS;
+            }
+        case IS_OBJECT:
+            if (Z_OBJ_HANDLE_P(current_name) == Z_OBJ_HANDLE_P(func_name)) {
+                return SUCCESS;   
+            }
+    }
+    return FAILURE;
+}
+
+
 
 void* zend_autoload_call(zend_string *name, zend_string *lname, long type)
 {
@@ -150,6 +172,19 @@ return_null:
 
 int zend_autoload_register(zend_autoload_func* func, long flags)
 {
+    zend_autoload_func *current;
+
+    ZEND_HASH_FOREACH_PTR(&EG(autoload.functions), current)
+        if (SUCCESS == zend_autoload_callback_equals(func, current)) {
+            if (current->type == func->type) {
+                /* already registered!!! */
+                zval_ptr_dtor(&func->fci.function_name);
+                efree(func);
+                return SUCCESS;
+            }
+        }
+    ZEND_HASH_FOREACH_END();
+
     Z_TRY_ADDREF(func->fci.function_name);
     if (zend_hash_next_index_insert_ptr(&EG(autoload.functions), func) == NULL) {
         Z_TRY_DELREF(func->fci.function_name);
@@ -170,39 +205,35 @@ int zend_autoload_register(zend_autoload_func* func, long flags)
 int zend_autoload_unregister(zend_autoload_func* func)
 {
     zend_ulong h;
+    zend_autoload_func *current;
+    int retval = FAILURE;
 
-    zval *func_name = &func->fci.function_name;
-    zval *current_name;
+    ZEND_HASH_FOREACH_NUM_KEY_PTR(&EG(autoload.functions), h, current)
+        if (SUCCESS == zend_autoload_callback_equals(func, current)) {
+            if (current->type & ZEND_AUTOLOAD_CLASS) {
+                EG(autoload.class_loader_count)--;
+            }
+            zend_hash_index_del(&EG(autoload.functions), h);
+            retval = SUCCESS;
+        }
+    ZEND_HASH_FOREACH_END();
+    return retval;
+}
+
+int zend_autoload_unregister_all(long type)
+{
+    zend_ulong h;
     zend_autoload_func *current;
 
     ZEND_HASH_FOREACH_NUM_KEY_PTR(&EG(autoload.functions), h, current)
-        current_name = &current->fci.function_name;
-        if (Z_TYPE_P(func_name) != Z_TYPE_P(current_name)) {
-            continue;
-        }
-        switch (Z_TYPE_P(func_name)) {
-            case IS_STRING:
-                if (zend_string_equals(Z_STR_P(func_name), Z_STR_P(current_name))) {
-                    // unset this one
-                    if (current->type & ZEND_AUTOLOAD_CLASS) {
-                        EG(autoload.class_loader_count)--;
-                    }
-                    zend_hash_index_del(&EG(autoload.functions), h);
-                    return SUCCESS;
-                }
-            case IS_OBJECT:
-                if (Z_OBJ_HANDLE_P(current_name) == Z_OBJ_HANDLE_P(func_name)) {
-                    // unset this one
-                    if (current->type & ZEND_AUTOLOAD_CLASS) {
-                        EG(autoload.class_loader_count)--;
-                    }
-                    zend_hash_index_del(&EG(autoload.functions), h);
-                    return SUCCESS;   
-                }
+        if (current->type & type) {
+            if (current->type & ZEND_AUTOLOAD_CLASS) {
+                EG(autoload.class_loader_count)--;
+            }
+            zend_hash_index_del(&EG(autoload.functions), h);
         }
     ZEND_HASH_FOREACH_END();
-
-    return FAILURE;
+    return SUCCESS;
 }
 
 void zend_autoload_dtor(zval *pzv)
@@ -264,4 +295,14 @@ ZEND_FUNCTION(autoload_unregister)
     }
     efree(func);
     RETURN_TRUE;
+}
+
+ZEND_FUNCTION(autoload_unregister_all)
+{
+    long type = ~0;
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), "|l", &type) == FAILURE) {
+        return;
+    }
+
+    RETURN_BOOL(SUCCESS == zend_autoload_unregister_all(type));
 }

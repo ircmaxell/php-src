@@ -22,8 +22,10 @@
 #include "zend_API.h"
 #include "zend_hash.h"
 
-ZEND_FUNCTION(autoload_unregister);
+
 ZEND_FUNCTION(autoload_register);
+ZEND_FUNCTION(autoload_unregister);
+ZEND_FUNCTION(autoload_unregister_all);
 
 typedef struct {
     zend_fcall_info fci;
@@ -35,6 +37,7 @@ typedef struct {
 void* zend_autoload_call(zend_string *name, zend_string *lname, long type);
 int zend_autoload_register(zend_autoload_func* func, long flags);
 int zend_autoload_unregister(zend_autoload_func* func);
+int zend_autoload_unregister_all(long type);
 void zend_autoload_dtor(zval *pzv);
 
 #define ZEND_AUTOLOAD_CLASS     (1<<0)

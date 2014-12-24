@@ -255,6 +255,10 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_unregister, 0, 0, 1)
 	ZEND_ARG_INFO(0, callback)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_autoload_unregister_all, 0, 0, 0)
+	ZEND_ARG_INFO(0, type)
+ZEND_END_ARG_INFO()
 /* }}} */
 
 static const zend_function_entry builtin_functions[] = { /* {{{ */
@@ -325,8 +329,9 @@ static const zend_function_entry builtin_functions[] = { /* {{{ */
 	ZEND_FE(gc_enabled, 		arginfo_zend__void)
 	ZEND_FE(gc_enable, 		arginfo_zend__void)
 	ZEND_FE(gc_disable, 		arginfo_zend__void)
-	ZEND_NS_FE("php", autoload_unregister, arginfo_autoload_unregister)
 	ZEND_NS_FE("php", autoload_register, arginfo_autoload_register)
+	ZEND_NS_FE("php", autoload_unregister, arginfo_autoload_unregister)
+	ZEND_NS_FE("php", autoload_unregister_all, arginfo_autoload_unregister_all)
 	ZEND_FE_END
 };
 /* }}} */
