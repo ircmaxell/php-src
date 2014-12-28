@@ -8,32 +8,31 @@ php\autoload_register(php\AUTOLOAD_CONSTANT, function ($name) {
     define($name, "foobar");
 });
 
-$a = FOO1;
-$b = Foo2;
-$c = foo3;
-$d = FOO1\bar;
-$e = Foo2\bar;
-$f = foo3\bar;
-$g = foo\BAR1;
-$h = foo\Bar2;
-$i = foo\bar3;
-
-php\autoload_unregister_all();
-php\autoload_register(php\AUTOLOAD_CONSTANT, function ($name) {
-    echo "Useless autoloader called with name \"$name\"", PHP_EOL;
-});
-
-$j = foo\bar;
+var_dump(FOO1);
+var_dump(Foo2);
+var_dump(foo3);
+var_dump(FOO1\bar);
+var_dump(Foo2\bar);
+var_dump(foo3\bar);
+var_dump(foo\BAR1);
+var_dump(foo\Bar2);
+var_dump(foo\bar3);
 --EXPECTF--
 Autoloader called with name "FOO1"
+string(6) "foobar"
 Autoloader called with name "Foo2"
+string(6) "foobar"
 Autoloader called with name "foo3"
+string(6) "foobar"
 Autoloader called with name "FOO1\bar"
+string(6) "foobar"
 Autoloader called with name "Foo2\bar"
+string(6) "foobar"
 Autoloader called with name "foo3\bar"
+string(6) "foobar"
 Autoloader called with name "foo\BAR1"
+string(6) "foobar"
 Autoloader called with name "foo\Bar2"
+string(6) "foobar"
 Autoloader called with name "foo\bar3"
-Useless autoloader called with name "foo\bar"
-
-Fatal error: Undefined constant 'foo\bar' in %s on line %d
+string(6) "foobar"
