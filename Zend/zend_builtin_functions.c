@@ -2555,6 +2555,9 @@ ZEND_API void zend_fetch_debug_backtrace(zval *return_value, int skip_last, int 
 				debug_backtrace_get_args(call, &args);
 				add_assoc_zval_ex(&stack_frame, "args", sizeof("args")-1, &args);
 			}
+
+			add_assoc_long(&stack_frame, "strict_types",
+				(ZEND_CALL_INFO(call) & ZEND_CALL_STRICT_TYPEHINTS) > 0);
 		} else {
 			/* i know this is kinda ugly, but i'm trying to avoid extra cycles in the main execution loop */
 			zend_bool build_filename_arg = 1;
