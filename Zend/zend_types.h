@@ -323,6 +323,10 @@ struct _zend_ast_ref {
 #define IS_INDIRECT             	15
 #define IS_PTR						17
 
+/* algebraic types */
+#define IS_ALGEBRAIC_AND			18
+#define IS_ALGEBRAIC_OR				19
+
 static zend_always_inline zend_uchar zval_get_type(const zval* pz) {
 	return pz->u1.v.type;
 }
