@@ -251,7 +251,8 @@ static YYSIZE_T zend_yytnamerr(char*, const char*);
 %type <ast> ctor_arguments alt_if_stmt_without_else trait_adaptation_list lexical_vars
 %type <ast> lexical_var_list encaps_list array_pair_list non_empty_array_pair_list
 %type <ast> assignment_list isset_variable type return_type
-%type <ast> identifier algebraic_type algebraic_or_type algebraic_and_type algebraic_type_part
+%type <ast> identifier
+%type <ast> type_unit type_expression type_union type_intersection
 
 %type <num> returns_ref function is_reference is_variadic variable_modifiers
 %type <num> method_modifiers non_empty_member_modifiers member_modifier
@@ -637,7 +638,7 @@ parameter:
 
 optional_type:
 		/* empty */			{ $$ = NULL; }
-	|	algebraic_type		{ $$ = $1; }
+	|	type_expression		{ $$ = $1; }
 ;
 
 type:
@@ -646,30 +647,30 @@ type:
 	|	name		{ $$ = $1; }
 ;
 
-algebraic_type:
-         type { $$ = $1; }
-    |    '(' algebraic_type_part ')' { $$ = $2; }
+type_unit:
+		type	{ $$ = $1; }
+	|	'(' type_expression ')'	{ $$ = $2; }
 ;
 
-algebraic_type_part:
-    	algebraic_or_type { $$ = $1; }
-    |   algebraic_and_type { $$ = $1; }
-    | 	type   			{ $$ = $1; }
+type_expression:
+		type_unit	{ $$ = $1; }
+	|	type_unit type_union	{ $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_OR, $1, $2); }
+	|	type_unit type_intersection	{ $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_AND, $1, $2); }
 ;
 
-algebraic_or_type:
-        algebraic_type '|' algebraic_type { $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_OR, $1, $3); }
-    |   algebraic_type '|' algebraic_or_type { $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_OR, $1, $3); }
+type_union:
+		'|' type_unit	{ $$ = $2; }
+	|	'|' type_unit type_union	{ $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_OR, $2, $3); }
 ;
 
-algebraic_and_type:
-        algebraic_type '&' algebraic_type { $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_AND, $1, $3, NULL); }
-    |   algebraic_type '&' algebraic_and_type { $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_AND, $1, $3, NULL); }
+type_intersection:
+		'&' type_unit	{ $$ = $2; }
+	|	'&' type_unit type_intersection	{ $$ = zend_ast_create_ex(ZEND_AST_ALGEBRAIC_TYPE, IS_ALGEBRAIC_AND, $2, $3); }
 ;
 
 return_type:
 		/* empty */	{ $$ = NULL; }
-	|	':' algebraic_type	{ $$ = $2; }
+	|	':' type_expression	{ $$ = $2; }
 ;
 
 argument_list:
