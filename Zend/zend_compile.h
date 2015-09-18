@@ -296,6 +296,15 @@ typedef struct _zend_property_info {
 #define OBJ_PROP_TO_NUM(offset) \
 	((offset - OBJ_PROP_TO_OFFSET(0)) / sizeof(zval))
 
+/* type_info for parameters/returns */
+typedef struct _zend_type_info {
+	zend_uchar type;
+	union {
+		zend_string *class_name;
+		struct zend_type_info *type_info;
+	} u;
+} zend_type_info;
+
 /* arg_info for internal functions */
 typedef struct _zend_internal_arg_info {
 	const char *name;
@@ -309,8 +318,7 @@ typedef struct _zend_internal_arg_info {
 /* arg_info for user functions */
 typedef struct _zend_arg_info {
 	zend_string *name;
-	zend_string *class_name;
-	zend_uchar type_hint;
+	zend_type_info type_info;
 	zend_uchar pass_by_reference;
 	zend_bool allow_null;
 	zend_bool is_variadic;

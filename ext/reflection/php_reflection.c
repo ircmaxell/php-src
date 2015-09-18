@@ -33,6 +33,7 @@
 
 #include "zend.h"
 #include "zend_API.h"
+#include "zend_compile.h"
 #include "zend_exceptions.h"
 #include "zend_operators.h"
 #include "zend_constants.h"
@@ -656,6 +657,26 @@ static zend_op* _get_recv_op(zend_op_array *op_array, uint32_t offset)
 }
 /* }}} */
 
+static void _print_type_info(string *str, zend_type_info *type_info) {
+	if (type_info->type == IS_ALGEBRAIC_OR) {
+		string_printf(str, "(");
+		_print_type_info(str, type_info->u.type_info[0]);
+		string_printf(str, "|");
+		_print_type_info(str, type_info->u.type_info[1]);
+		string_printf(str, ")");
+	} else if (type_info->type == IS_ALGEBRAIC_AND) {
+		string_printf(str, "(");
+		_print_type_info(str, type_info->u.type_info[0]);
+		string_printf(str, "&");
+		_print_type_info(str, type_info->u.type_info[1]);
+		string_printf(str, ")");
+	} else if (type_info->type == IS_OBJECT) {
+		string_printf(str, "%s", ZSTR_VAL(type_info->u.class_name));
+	} else {
+		string_printf(str, zend_get_type_by_const(type_info->type));
+	}
+}
+
 /* {{{ _parameter_string */
 static void _parameter_string(string *str, zend_function *fptr, struct _zend_arg_info *arg_info, uint32_t offset, uint32_t required, char* indent)
 {
@@ -665,20 +686,18 @@ static void _parameter_string(string *str, zend_function *fptr, struct _zend_arg
 	} else {
 		string_printf(str, "<required> ");
 	}
-	if (arg_info->class_name) {
-		string_printf(str, "%s ",
-			(fptr->type == ZEND_INTERNAL_FUNCTION &&
-			 !(fptr->common.fn_flags & ZEND_ACC_USER_ARG_INFO)) ?
-			((zend_internal_arg_info*)arg_info)->class_name :
-			ZSTR_VAL(arg_info->class_name));
+	if (fptr->type == ZEND_INTERNAL_FUNCTION && 
+		!(fptr->common.fn_flags & ZEND_ACC_USER_ARG_INFO)) {
+		if (arg_info->class_name) {
+			string_printf(str, "%s ", ((zend_internal_arg_info*)arg_info)->class_name);
+		} else if (arg_info->type_hint) {
+			string_printf(str, "%s ", zend_get_type_by_const(arg_info->type_hint));
+		}
 		if (arg_info->allow_null) {
 			string_printf(str, "or NULL ");
 		}
-	} else if (arg_info->type_hint) {
-		string_printf(str, "%s ", zend_get_type_by_const(arg_info->type_hint));
-		if (arg_info->allow_null) {
-			string_printf(str, "or NULL ");
-		}
+	} else if (arg_info->type_info->type) {
+		_print_type_info(str, arg_info->type_info);
 	}
 	if (arg_info->pass_by_reference) {
 		string_write(str, "&", sizeof("&")-1);

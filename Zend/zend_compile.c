@@ -4371,16 +4371,25 @@ ZEND_API void zend_set_function_arg_flags(zend_function *func) /* {{{ */
 }
 /* }}} */
 
-static void zend_compile_typename(zend_ast *ast, zend_arg_info *arg_info) /* {{{ */
+static void zend_compile_typename(zend_ast *ast, zend_type_info *type_info) /* {{{ */
 {
 	if (ast->kind == ZEND_AST_TYPE) {
-		arg_info->type_hint = ast->attr;
+		type_info->type = ast->attr;
+	} else if (ast->kind == ZEND_AST_ALGEBRAIC_TYPE) {
+		type_info->type = ast->attr;
+
+		type_info->u.type_info = safe_emalloc(sizeof(zend_type_info), 2, 1);
+		type_info->u.type_info[2] = NULL;
+
+		zend_compile_typename(&ast->child[0], &type_info->u.type_info[0]);
+		zend_compile_typename(&ast->child[1], &type_info->u.type_info[1]);
+
 	} else {
 		zend_string *class_name = zend_ast_get_str(ast);
 		zend_uchar type = zend_lookup_builtin_type_by_name(class_name);
 
 		if (type != 0) {
-			arg_info->type_hint = type;
+			type_info->type = type;
 		} else {
 			uint32_t fetch_type = zend_get_class_fetch_type_ast(ast);
 			if (fetch_type == ZEND_FETCH_CLASS_DEFAULT) {
@@ -4391,8 +4400,8 @@ static void zend_compile_typename(zend_ast *ast, zend_arg_info *arg_info) /* {{{
 				zend_string_addref(class_name);
 			}
 
-			arg_info->type_hint = IS_OBJECT;
-			arg_info->class_name = class_name;
+			type_info->type = IS_OBJECT;
+			type_info->u.class_name = class_name;
 		}
 	}
 }
@@ -4415,7 +4424,7 @@ void zend_compile_params(zend_ast *ast, zend_ast *return_type_ast) /* {{{ */
 		arg_infos->allow_null = 0;
 		arg_infos->class_name = NULL;
 
-		zend_compile_typename(return_type_ast, arg_infos);
+		zend_compile_typename(return_type_ast, arg_infos->type_info);
 
 		arg_infos++;
 		op_array->fn_flags |= ZEND_ACC_HAS_RETURN_TYPE;
